@@ -806,7 +806,19 @@ function V_restore(str)
  local f=load("return "..str,"save","t",{}) local ok,d=pcall(f)
  if not ok or type(d)~="table" or type(d.S)~="table" or type(d.S.vars)~="table" or not R.room[d.S.room] then return J{ok=false,msg="Arquivo de save corrompido."} end
  if d.pid~=R.proj.id or d.ver~=R.proj.version then return J{ok=false,msg="Save de outra história ou versão ("..tostring(d.pid).." "..tostring(d.ver)..")."} end
- S=d.S S.player=S.player or {} S.pshow=S.pshow or {} S.hudoff=S.hudoff or {} S.theme=S.theme or {} S.visited=S.visited or {} S.savereq=nil Q,cur,waiting,EQ,errs={},nil,nil,{},{} busy,adv,pend=false,false,0 return reply({})
+ S=d.S S.player=S.player or {} S.pshow=S.pshow or {} S.hudoff=S.hudoff or {} S.theme=S.theme or {} S.visited=S.visited or {} S.savereq=nil
+ -- Compatibilidade com saves antigos: recupera o game over se o final já foi executado.
+ if not S.over then
+  local oldfinal=S.vars.final
+  if oldfinal and R.ending[oldfinal] then S.over=oldfinal
+  else
+   local deadline=((7-(S.day0 or 1))*1440)+23*60
+   if (S.vars.divida or 0)>0 and (S.t or 0)>=deadline then
+    S.vars.fim=true S.vars.final="cobradores" S.over="cobradores"
+   end
+  end
+ end
+ Q,cur,waiting,EQ,errs={},nil,nil,{},{} busy,adv,pend=false,false,0 return reply({})
 end
 </script>
 

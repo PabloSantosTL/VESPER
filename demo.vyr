@@ -2944,7 +2944,7 @@ Event.create("prazo_final", {
         if State.get("fim") then
             Narrator.say("23h00. O prazo da dívida passa, mas isso já não importa mais.")
         elseif State.get("divida") > 0 then
-            Scene.start("cobradores")
+            Scene.call("cobradores")
         else
             Scene.start("prazo_ok")
         end
