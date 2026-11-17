@@ -214,6 +214,8 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
   #game header{position:fixed;top:0;left:0;right:0;z-index:115;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 8px;align-items:center;margin:0;padding:calc(env(safe-area-inset-top) + 9px) 12px 10px;border-bottom:1px solid var(--ln);background:rgba(0,0,0,.98);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
   #game header h2{min-width:0;overflow-wrap:anywhere;font-size:clamp(12px,3.6vw,15px);line-height:1.35}
   #clk{justify-content:flex-end;gap:7px;white-space:nowrap;font-size:10px;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+  #clk{transform:translateX(0);opacity:1;transition:transform .32s cubic-bezier(.2,.8,.2,1),opacity .22s ease;will-change:transform,opacity}
+  body.panel-open #clk{transform:translateX(-58px);opacity:.18;pointer-events:none}
   #clk b{font-size:clamp(19px,6vw,25px)}
   .header-actions{display:none}
   .header-actions button{min-width:0;padding:.75em .35em;text-align:center;font-size:10px;letter-spacing:.03em;min-height:42px}
