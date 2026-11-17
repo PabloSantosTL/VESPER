@@ -40,7 +40,12 @@ Variables.define({
     met_ishi = false, met_taro = false, met_sal = false, met_pixel = false,
     met_mira = false, met_qi = false, met_rex = false, met_lyra = false, met_zeca = false,
     lyra_caca = false, escapou = false, oferta_lyra = false,
-    horta_dia = 0, radio_dia = 0
+    horta_dia = 0, radio_dia = 0,
+    apresentou_ishi = false, apresentou_taro = false, apresentou_sal = false,
+    apresentou_pixel = false, apresentou_mira = false, apresentou_qi = false,
+    apresentou_rex = false, apresentou_lyra = false, apresentou_zeca = false,
+    ouviu_rui = false, rumor_zeca = false, rumor_zeca_camelo = false,
+    rumor_zeca_mira = false, conhece_juca = false
 })
 
 -- ============================================================================
@@ -121,7 +126,41 @@ local function g(m, f, n)
     return n or m
 end
 local function trat() return g("querido", "querida", "meu bem") end
-local function viz() return g("vizinho", "vizinha", Player.name() or ""); end
+local function viz() return g("vizinho", "vizinha", "meu bem") end
+local function nome_conhecido(id, alternativa)
+    if State.get("apresentou_" .. id) then
+        local nome = Player.name()
+        if nome and nome ~= "" then return nome end
+    end
+    return alternativa or "você"
+end
+local function apresentar(id)
+    local flag = "apresentou_" .. id
+    if State.get(flag) then
+        State.set("met_" .. id, true)
+        return
+    end
+    local nome = Player.name()
+    if not nome or nome == "" then nome = "sem nome" end
+    Scene.choice({
+        { id = "apresentar", text = "Se apresentar: 'Oi, eu sou " .. nome .. ".'",
+          say = "Oi, eu sou " .. nome .. ". Prazer." }
+    })
+    State.set(flag, true)
+    State.set("met_" .. id, true)
+    local estilos = {
+        ishi = { effect = "wave", color = "#9bd8b0", speed = 20 },
+        taro = { effect = "wave", color = "#ffbd66", speed = 18 },
+        sal = { effect = "pulse", color = "#ffb58a", speed = 18 },
+        pixel = { effect = "glitch", color = "#6fe3ff", speed = 16 },
+        mira = { effect = "neon", color = "#e8bbff", speed = 18 },
+        qi = { effect = "pulse", color = "#ffbd66", speed = 18 },
+        rex = { effect = "shake", color = "#ff6b72", speed = 16 },
+        lyra = { effect = "neon", color = "#bba8ff", speed = 18 },
+        zeca = { effect = "glitch", color = "#a7efbf", speed = 16 }
+    }
+    Character.say(id, "Prazer, " .. nome .. ". Agora sei como te chamar.", estilos[id])
+end
 local function tem(tr) return Player.has("tracos", tr) end
 local function curioso(t) if tem("curioso") then Narrator.say(t) end end
 
@@ -163,7 +202,11 @@ local function falar(id, dur)
     return { id = "falar_" .. id, label = "Falar com " .. nome_de(id), duration = dur or 5,
              conditions = function(ctx)
                  if id == "lyra" and State.get("q_main") >= 5 then return false end
-                 return Character.room(id) == ctx.room and ativ(id) ~= "dormindo"
+                 local atividade = ativ(id)
+                 if type(atividade) == "string" and atividade:find("dormindo", 1, true) then return false end
+                 if id == "mira" and atividade == "sumida" then return false end
+                 if id == "taro" and ctx.room == "cozinha_taro" and Character.room(id) == "noodle_bar" then return true end
+                 return Character.room(id) == ctx.room
              end,
              scene = "talk_" .. id }
 end
@@ -212,13 +255,38 @@ local function entrega(flag)
         State.add("entregas", 1)
         Narrator.say("Você tira a tampa de alumínio. O vapor sobe quando a tigela chega às mãos de quem espera.")
         if flag == "entregou_sal" then
-            Character.say("sal", "Lámen. Você acabou de melhorar o plantão. Obrigado. Deixa aí, eu como quando terminar.")
+            if World.player_room() == "arena" then
+                Character.say("sal", "Lámen? Bom. Os lutadores esquecem de comer quando começam a sangrar. Vou deixar esfriar um pouco.", { effect = "pulse", color = "#ffb58a", speed = 18 })
+                Narrator.say("Sal põe a tigela no banco junto à bolsa médica e volta a conferir os curativos.")
+            elseif World.player_room() == "bar_sinapse" then
+                Character.say("sal", "Isso chegou na hora certa. Amanhã eu volto para a clínica; hoje só quero terminar a noite sem ouvir um monitor apitar.", { effect = "pulse", color = "#ffb58a", speed = 18 })
+                Narrator.say("Sal põe a tigela ao lado do copo, longe da borda do balcão, e volta a olhar para a bebida.")
+            else
+                Character.say("sal", "Lámen. Você acabou de melhorar o plantão. Obrigado. Deixa aí, eu como quando terminar.", { effect = "pulse", color = "#ffb58a", speed = 18 })
+                Narrator.say("Sal deixa a tigela ao lado da bancada e volta ao atendimento.")
+            end
         elseif flag == "entregou_pixel" then
-            Character.say("pixel", "Você trouxe comida de verdade? Espera. Vou fechar essas janelas antes que alguém roube minha senha.")
-            Narrator.say("Pixel apoia a tigela ao lado do teclado, tira uma foto e só então começa a comer.")
+            if World.player_room() == "telhado" then
+                Character.say("pixel", "Comida de verdade? Você salvou minha noite. Deixa aí, só vou terminar de contar os pulsos da Torre.", { effect = "glitch", color = "#6fe3ff", speed = 16 })
+                Narrator.say("Pixel apoia a tigela sobre a caixa d'água, ao lado do comunicador, e só então começa a comer.")
+            elseif World.player_room() == "refugio" then
+                Character.say("pixel", "Você trouxe comida até aqui? Boa. Os servidores não vão fugir enquanto eu como.", { effect = "glitch", color = "#6fe3ff", speed = 16 })
+                Narrator.say("Pixel apoia a tigela ao lado do terminal do refúgio, longe dos cabos expostos.")
+            else
+                Character.say("pixel", "Você trouxe comida de verdade? Espera. Vou fechar essas janelas antes que alguém roube minha senha.", { effect = "glitch", color = "#6fe3ff", speed = 16 })
+                Narrator.say("Pixel apoia a tigela ao lado do teclado, tira uma foto e só então começa a comer.")
+            end
         elseif flag == "entregou_rex" then
-            Character.say("rex", "Do Taro. Ele ainda lembra que eu existo.")
-            Narrator.say("Rex segura a tigela com as duas mãos. O primeiro gole interrompe o treino.")
+            Character.say("rex", "Do Taro. Ele ainda lembra que eu existo.", { effect = "shake", color = "#ff6b72", speed = 16 })
+            if World.player_room() == "noodle_bar" then
+                Narrator.say("Rex puxa a tigela para perto e abre espaço no balcão, sem interromper a refeição.")
+            elseif World.player_room() == "clinica" then
+                Narrator.say("Rex apoia a tigela no banco ao lado da maca e espera Sal terminar de trocar o curativo.")
+            elseif World.player_room() == "vestiario" then
+                Narrator.say("Rex deixa a tigela sobre o banco, longe das faixas limpas, e termina de enfaixar as mãos.")
+            else
+                Narrator.say("Rex segura a tigela com as duas mãos. O primeiro gole interrompe o treino.")
+            end
         end
         State.set("entregas", State.get("entregas") + 0)
         Narrator.say("(Entregas: " .. State.get("entregas") .. "/3)")
@@ -239,28 +307,16 @@ local function abre_lab(texto)
 end
 
 -- Dá nome a quem fala em cenas de fundo (não aparecem na tela de ambiente).
-local function fala(id, t, emo) Character.say(id, t, emo and { emotion = emo } or nil) end
-
--- Cada personagem chama o protagonista pelo nome na primeira fala.
-local _character_say = Character.say
-local chamados_pelo_nome = {}
-local personagens_principais = {
-    mira = true, taro = true, sal = true, pixel = true, ishi = true,
-    qi = true, rex = true, lyra = true, zeca = true, vesper = true
-}
-Character.say = function(id, texto, opts)
-    if personagens_principais[id] and not chamados_pelo_nome[id] then
-        local nome = Player.name()
-        local ja_tem_nome = nome and nome ~= "" and tostring(texto):find(nome, 1, true)
-        local usa_variavel_nome = tostring(texto):find("{player.nome}", 1, true)
-        if nome and nome ~= "" and not ja_tem_nome and not usa_variavel_nome then
-            texto = nome .. ", " .. texto
-        end
-        chamados_pelo_nome[id] = true
-    end
-    return _character_say(id, texto, opts)
+local function fala(id, t, estilo)
+    local estilos = {
+        fria = { effect = "neon", color = "#bba8ff", speed = 18 },
+        nervosa = { effect = "glitch", color = "#ff7b9c", speed = 16 },
+        calma = { effect = "wave", color = "#9bd8b0", speed = 20 }
+    }
+    Character.say(id, t, estilo and estilos[estilo] or nil)
 end
 
+-- O nome do protagonista só é conhecido por quem ouviu sua apresentação.
 
 local function fala_escolha(texto)
     local s = tostring(texto):gsub("%s*%b()", "")
@@ -272,6 +328,17 @@ local function fala_escolha(texto)
         ["Perguntar se dá para negociar o prazo."] = "Dá para negociar o prazo?",
         ["Perguntar do gato da Dona Ishi."] = "Você sabe onde está o gato da Dona Ishi?",
         ["Perguntar sobre o Rui da 14-F."] = "Você conhece o Rui da 14-F?",
+        ["Perguntar quem é o morador da 14-F."] = "Quem é o morador da 14-F?",
+        ["Perguntar como ela cuida do bonsai."] = "Como você cuida desse bonsai?",
+        ["Comentar o ruído do elevador."] = "Esse elevador voltou a fazer barulho.",
+        ["Perguntar pelo cheiro de chá."] = "Que cheiro é esse? É chá?",
+        ["Perguntar que horas ele abre."] = "Que horas você abre?",
+        ["Perguntar se ela vem à feira todos os dias."] = "Você vem à feira todos os dias?",
+        ["Perguntar se ela cuida da horta sozinha."] = "Você cuida da horta sozinha?",
+        ["Perguntar de onde vieram as plantas."] = "De onde vieram essas plantas?",
+        ["Perguntar o que ela está ouvindo."] = "O que você está ouvindo?",
+        ["Perguntar por que o rádio chia."] = "Esse rádio sempre chia assim?",
+        ["Perguntar o que ela observa na feira."] = "O que você está procurando por aqui?",
         ["Perguntar sobre 'o rapaz do cano'."] = "O que você sabe sobre o rapaz do cano?",
         ["Perguntar o que se comenta sobre a Torre."] = "O que andam dizendo sobre a Torre?",
         ["Perguntar ao Bartô o que ele ouve por aqui."] = "O que você tem ouvido por aqui, Bartô?",
@@ -284,6 +351,7 @@ local function fala_escolha(texto)
         ["Dizer que também ouve o elevador."] = "Também ouço o elevador.",
         ["Perguntar o que ela está consertando."] = "O que você está consertando?",
         ["Perguntar pelo cheiro de chá."] = "Que cheiro é esse? É chá?",
+        ["Perguntar que horas ele abre."] = "Que horas você abre?",
         ["Perguntar onde ele foi visto pela última vez e oferecer ajuda."] = "Onde ele foi visto pela última vez? Posso ajudar a procurar.",
         ["Dizer que está sem tempo."] = "Desculpa, estou sem tempo agora.",
         ["Perguntar por que ela não chamou a manutenção."] = "Por que você não chamou a manutenção?",
@@ -291,7 +359,10 @@ local function fala_escolha(texto)
         ["Perguntar pelo gato holográfico no letreiro."] = "O que é aquele gato holográfico no letreiro?",
         ["Perguntar se ele sempre trabalha sozinho."] = "Você sempre trabalha sozinho?",
         ["Perguntar quanto ele paga e por que não manda um drone."] = "Quanto você paga? Por que não manda um drone?",
+        ["Aceitar as entregas."] = "Eu levo as tigelas.",
+        ["Recusar por enquanto."] = "Agora não, desculpa.",
         ["Perguntar o que Sal acha da cidade."] = "O que você acha desta cidade, Sal?",
+        ["Perguntar por que ele está bebendo."] = "Por que você está bebendo, doutor?",
         ["Perguntar sobre trabalhos."] = "Tem algum trabalho disponível?",
         ["Perguntar sobre a rinha."] = "O que você pode me dizer sobre a rinha?",
         ["Perguntar discretamente sobre ORFEU."] = "Você já ouviu falar de ORFEU?",
@@ -1372,8 +1443,9 @@ Scene.create("escuta_portas", function()
         Narrator.say("No fim do corredor, Seu Abel ronca de boca aberta, deitado numa cadeira de praia. A tosse dele tem catarro azulado. Do lado, uma caneca de chá frio e uma foto de navio.")
     elseif n == 5 then
         Character.say("neide", "Levaram o Rui da 14-F em maio. Disseram que era 'checagem'. Ele nunca teve nada, só ficava na janela.")
+        State.set("ouviu_rui", true)
         Character.say("abel", "Quando eles chamam de checagem, é porque a lista é nova.")
-        Narrator.say("As duas vozes baixam quando uma porta range. Você finge procurar a chave.")
+        Narrator.say("As vozes baixam quando uma porta range. Você finge procurar a chave.")
     else
         Narrator.say("Alguém digita muito rápido atrás da 14-E, parando só para respirar. Às vezes sai uma risada seca. Quem está lá dentro não sai há três dias, pelo que dizem os sacos de lixo na porta.")
     end
@@ -1381,38 +1453,52 @@ end)
 
 Scene.create("papo_lavanderia", function()
     limpa()
-    Narrator.say("Seu Abel está sentado no banco, de bermuda e camiseta de time, olhando o tambor girar. Dona Neide dobra lençóis sem sair do lugar. Ao lado delas, um menino de uns dez anos, descalço, desenha com carvão no chão de cimento.")
+    Narrator.say("Seu Abel está sentado no banco, de bermuda e camiseta de time, olhando o tambor girar. Dona Neide dobra lençóis sem sair do lugar. Ao lado deles, um menino de uns dez anos, descalço, desenha com carvão no chão de cimento.")
     local n = sorteia("lavanderia", 3)
     if n == 1 then
         Character.say("abel", "Trabalhei trinta anos nas docas. Naquele tempo, um navio de contêiner chegava toda semana. Hoje só chegam navios de uma carga só, e ninguém assina a nota.")
         Character.say("neide", "Abel, ninguém quer ouvir sobre navio.")
         Character.say("abel", "Quinta tem manutenção. Eu já deixei a janela aberta. Cada apagão custa um aquecedor.")
     elseif n == 2 then
-        Character.say("neide", "A Ishi não sai do corredor desde que o gatinho sumiu. Ela coloca o pires todo dia às seis. Eu disse: 'Ishi, gato de máquina volta sozinho'. Ela olhou para mim com aqueles olhos...")
+        Character.say("neide", "Desde que o gatinho sumiu, a Ishi passa no corredor várias vezes por dia. Coloca o pires às seis e depois sai procurando. Eu disse: 'Ishi, gato de máquina volta sozinho'. Ela olhou para mim com aqueles olhos...")
         Character.say("juca", "Eu vi o gato azul, tia.")
         Character.say("neide", "Juca, não interrompa.")
         Character.say("juca", "Ele desceu pela escada de incêndio e foi pro beco do lámen. Eu vi. Brilhava.")
+        State.set("conhece_juca", true)
         State.set("pista_gato", math.max(1, State.get("pista_gato")))
     else
         Character.say("neide", "O Rui da 14-F nunca fez nada. Só olhava a Torre da janela. Aí uma tarde parou um carro branco, e depois de uma semana a esposa já tinha vendido os móveis.")
+        State.set("ouviu_rui", true)
         Character.say("abel", "O carro branco nunca para na porta de quem deve. Para na de quem fez a conta certa.")
     end
+    local pergunta_rui = State.get("ouviu_rui") and "Perguntar sobre o Rui da 14-F." or "Perguntar quem é o morador da 14-F."
     local c = Scene.choice({
         { id = "ouvir", text = "Continuar ouvindo, sem dizer nada.", say = fala_escolha("Continuar ouvindo, sem dizer nada.") },
         { id = "gato", text = "Perguntar do gato da Dona Ishi.", say = fala_escolha("Perguntar do gato da Dona Ishi."), conditions = function() return State.get("q_gato") >= 1 and State.get("pista_gato") < 1 end },
-        { id = "rui", text = "Perguntar sobre o Rui da 14-F.", say = fala_escolha("Perguntar sobre o Rui da 14-F.") },
+        { id = "rui", text = pergunta_rui, say = fala_escolha(pergunta_rui) },
         { id = "sair", text = "Pegar o casaco e sair.", say = fala_escolha("Pegar o casaco e sair.") }
     })
     if c == "gato" then
-        Character.say("juca", "Eu vi, " .. (Player.name() or "você") .. ". Ele desceu pela escada e foi pro beco do lámen. Eu vi mesmo.")
+        if not State.get("conhece_juca") then
+            Character.say("juca", "Eu sou o Juca. Ouvi você falando do gato da Ishi. Vi um gato azul descendo pela escada de incêndio e indo pro beco do lámen.")
+            State.set("conhece_juca", true)
+        else
+            Character.say("juca", "Eu vi o gato azul. Ele desceu pela escada e foi pro beco do lámen. Eu vi mesmo.")
+        end
         State.set("pista_gato", 1)
         Narrator.say("Juca volta a desenhar. O traço no chão tem a forma de um gato com uma orelha torta.")
     elseif c == "rui" then
-        Character.say("neide", "Ele fazia a conta do mês no caderno. Tinha uma teoria de que os apagões do bairro têm hora marcada. Dizia que a Torre sabia quando a gente ia reclamar.")
-        Character.say("abel", "Teoria de quem tem tempo demais.")
+        if not State.get("ouviu_rui") then
+            Character.say("neide", "Rui. Morava na 14-F, no fim do corredor. Foi levado em maio numa 'checagem' da Helix. Nunca teve nada, só ficava na janela olhando a Torre.")
+            State.set("ouviu_rui", true)
+            Character.say("abel", "Quando eles chamam de checagem, é porque a lista é nova.")
+        else
+            Character.say("neide", "Ele fazia a conta do mês no caderno. Tinha uma teoria de que os apagões do bairro têm hora marcada. Dizia que a Torre sabia quando a gente ia reclamar.")
+            Character.say("abel", "Teoria de quem tem tempo demais.")
+        end
         Narrator.say("Seu Abel olha para o tambor. Neide dobra o mesmo lençol pela terceira vez.")
     elseif c == "ouvir" then
-        Narrator.say("As duas voltam à discussão sobre o preço do gás, que subiu pela quarta vez. O tambor termina o ciclo.")
+        Narrator.say("As vozes voltam à discussão sobre o preço do gás, que subiu pela quarta vez. O tambor termina o ciclo.")
     end
 end)
 
@@ -1454,6 +1540,8 @@ Scene.create("camelos", function()
         Character.say("camelo", "Ouviu falar que a Helix está comprando quarteirões na rua das Fachadas? Compram tudo, menos o que o vento deixa solto. Eles não gostam de coisa solta.")
     elseif c == "rapaz" then
         Character.say("camelo", "Zeca. Fica nos becos, depois da Avenida Baixa. Não pergunte o que ele vende. Pergunte o que ele tem. É diferente, e ele gosta mais.")
+        State.set("rumor_zeca", true)
+        State.set("rumor_zeca_camelo", true)
     elseif c == "torre" then
         Character.say("camelo", "Que a Torre tem um andar embaixo da terra. Que alguém de lá desce às quintas e volta pálido. Que a luz azul, às três da manhã, não é de lâmpada.")
         State.add("lore", 0)
@@ -1583,20 +1671,37 @@ local function saud()
     return "Boa noite"
 end
 
+local function ishi_retorna(a)
+    if a == "regando o bonsai" then
+        Narrator.say("Ela volta a cuidar do bonsai, molhando uma folha por vez com a seringa.")
+    elseif a == "olhando a feira" then
+        Narrator.say("Ela volta a examinar as barracas, comparando as peças sem tocar nelas.")
+    elseif a == "cuidando da horta" then
+        Narrator.say("Ela volta a prender o caule do tomateiro com barbante, conferindo se a folha ficou firme.")
+    elseif a == "ouvindo rádio" then
+        Narrator.say("Ela volta a ouvir o rádio no colo. O polegar procura o botão de sintonia, mas não muda a estação.")
+    else
+        Narrator.say("Ela retoma a atividade sem interromper o que estava fazendo.")
+    end
+end
+
 Scene.create("intro_ishi", function()
     limpa()
     local a = ativ("ishi")
     if a == "regando o bonsai" then
-        Narrator.say("No fim do corredor, uma senhora de colete acolchoado rega um bonsai de vinte centímetros com uma seringa sem agulha. Molha três folhas de cada vez e confere se ficaram verdes antes de molhar as próximas.")
+        Narrator.say("No fim do corredor, uma senhora de colete acolchoado rega um bonsai de vinte centímetros com uma seringa sem agulha. Molha três folhas de cada vez e confere se ficaram verdes antes de molhar as próximas. Ao lado do vaso, um pires de ração e uma garrafa térmica dividem o espaço de um banquinho baixo.")
     elseif a == "olhando a feira" then
         Narrator.say("Entre duas barracas, uma senhora de colete acolchoado olha a mercadoria sem tocar em nada. Os camelôs a cumprimentam pelo nome. Ela responde a cada um com um aceno e uma pergunta sobre os filhos, também pelo nome.")
+    elseif a == "cuidando da horta" then
+        Narrator.say("No telhado, uma senhora de colete acolchoado prende uma folha de tomate com barbante e afasta uma lagarta com a unha. As caixas de cultivo estão alinhadas entre as antenas.")
     else
-        Narrator.say("Uma senhora de colete acolchoado está sentada num banquinho dobrável em frente à porta 14-A, com um rádio de pilha no colo, volume quase em zero. Perto do pé dela há um pires de ração intacto, com uma película de poeira.")
+        Narrator.say("Uma senhora de colete acolchoado está sentada num banquinho dobrável em frente à porta 14-A, com um rádio de pilha no colo, volume quase em zero. Perto do pé dela há um pires de ração intacto, com uma película de poeira, e uma garrafa térmica encostada na parede.")
     end
     Narrator.say("Na parede atrás dela, um cartaz escrito à mão: PROCURA-SE MOCHI. GATO-DRONE, ORELHA ESQUERDA TORTA. RESPONDE A 'BIBI-BIBI'. Dá para ver que ela refez a letra três vezes. A de baixo, trêmula, é mais velha. A de cima é firme.")
     Narrator.say("Acima da porta, uma plaquinha de madeira entalhada: KENJI & ISHI.")
     Narrator.say("Ela te olha de baixo para cima, parando nos seus sapatos.")
-    Character.say("ishi", saud() .. ", " .. viz() .. ". Tire o sapato no tapete se for entrar. Se for só passar, pise onde o chão está limpo, que é o canto da parede. O resto eu ainda não lavei hoje.")
+    Character.say("ishi", saud() .. ", " .. viz() .. ". Tire o sapato no tapete se for entrar. Se for só passar, pise onde o chão está limpo, que é o canto da parede. O resto eu ainda não lavei hoje.", { effect = "wave", color = "#9bd8b0", speed = 20 })
+    apresentar("ishi")
     local c = Scene.choice({
         { id = "nome", text = "'" .. saud() .. ", Dona Ishi.' (Chamar pelo nome.)",
               say = fala_escolha("'" .. saud() .. ", Dona Ishi.'") },
@@ -1613,40 +1718,76 @@ Scene.create("intro_ishi", function()
         })
         if d == "chá" then
             Character.say("ishi", "Entalhou. Torto em duas letras, mas eu nunca corrigi. Aceita um chá? É chá de arroz torrado, não é de verdade, mas está quente.")
-            Narrator.say("Ela desenrosca a tampa da garrafa térmica e serve um dedo no copo. O copo tem uma rachadura colada com esmalte de unha vermelho.")
+            if a == "olhando a feira" then
+                Narrator.say("Ela tira uma garrafa térmica pequena da bolsa de lona, apoia o copo sobre uma caixa vazia e serve um pouco de chá.")
+            elseif a == "cuidando da horta" then
+                Narrator.say("Ela limpa a terra dos dedos, pega a garrafa térmica guardada sob o banco do telhado e serve um pouco no copo.")
+            else
+                Narrator.say("Ela desenrosca a tampa da garrafa térmica e serve um dedo no copo. O copo tem uma rachadura colada com esmalte de unha vermelho.")
+            end
             local e = Scene.choice({
                 { id = "aceito", text = "Aceitar o chá.", say = fala_escolha("Aceitar o chá.") },
                 { id = "recuso", text = "Recusar educadamente.", say = fala_escolha("Recusar educadamente.") }
             })
             if e == "aceito" then
                 Narrator.say("Tem gosto de arroz queimado e de garrafa velha. Você bebe tudo. Ela te observa terminar com atenção demais.")
-                Character.say("ishi", "Mão de quem trabalha com ferro. O Kenji tinha mãos assim. Volte quando quiser, " .. viz() .. ". O pires é do Mochi, mas a cadeira é de quem aparecer.")
+                local origem = Player.get("origem")
+                local observacao = "Mãos de quem já precisou aprender a se virar."
+                if origem == "entregador" then observacao = "Mãos de quem passa o dia segurando um guidão."
+                elseif origem == "helix" then observacao = "Mãos de quem passou tempo demais diante de uma tela."
+                elseif origem == "sucata" then observacao = "Mãos de quem trabalha com ferro."
+                elseif origem == "ringue" then observacao = "Mãos de quem já apanhou e continuou de pé." end
+                local convite = "Volte quando quiser, " .. viz() .. ". O pires é do Mochi, mas o banquinho é de quem aparecer."
+                if a == "olhando a feira" then convite = "Quando passar pelo corredor, apareça para outro chá, " .. viz() .. "."
+                elseif a == "cuidando da horta" then convite = "Quando eu descer para o corredor, guarde um minuto para outro chá, " .. viz() .. "." end
+                Character.say("ishi", observacao .. " O Kenji tinha mãos assim. " .. convite, { effect = "wave", color = "#9bd8b0", speed = 20 })
                 conf("ishi", 2)
             else
                 Character.say("ishi", "Faz bem. Quem aceita chá de todo mundo acaba devendo conversa.")
                 conf("ishi", 1)
             end
+            ishi_retorna(a)
         else
             Character.say("ishi", "Ele foi trabalhar numa quinta e não voltou. A empresa mandou um envelope e um pêsame de duas linhas. A última linha tinha um erro de digitação.")
-            Narrator.say("Ela volta a olhar para o rádio no colo. O dedo dela passa pela borda dele, devagar, como quem confere o pó.")
+            ishi_retorna(a)
             conf("ishi", 2)
         end
     elseif c == "gato" then
         Character.say("ishi", "O Mochi. Meu marido comprou o filhote numa feira, com a orelha já torta. Disse ao vendedor que era defeito de fábrica. O vendedor disse que era 'característica'. Kenji ficou rindo a semana toda.")
         Narrator.say("Ela olha para o pires e não diz mais nada sobre o gato.")
-        Character.say("ishi", "Eu não estou pedindo nada ao " .. viz() .. ". Só peço que não pise no pires.")
+        Character.say("ishi", "Eu não estou pedindo nada a você. Só peço que não pise no pires.")
         Narrator.say("Você desvia do pires e pisa no canto limpo do chão. Ela percebe e anota.")
         conf("ishi", 1)
+        ishi_retorna(a)
     else
-        Narrator.say("Ela devolve o aceno com dois dedos, sem sorrir. O rádio chia, e o volume sobe um ponto quando você já está longe.")
+        ishi_retorna(a)
     end
 end)
 
 Scene.create("intro_taro", function()
     limpa()
+    if ativ("taro") == "dormindo" then
+        Narrator.say("A cortina de ferro do Lámen do Taro está a meio caminho. As panelas estão frias e, atrás do biombo, um homem de ombros largos dorme sentado, com o avental ainda amarrado. Um letreiro de gato pisca sobre a porta.")
+        Character.say("taro", "Se veio comer, volta às cinco. Se veio me acordar, fala baixo e fala rápido.", { effect = "wave", color = "#ffbd66", speed = 18 })
+        apresentar("taro")
+        local c = Scene.choice({
+            { id = "horario", text = "Perguntar que horas ele abre.", say = fala_escolha("Perguntar que horas ele abre.") },
+            { id = "gato", text = "Comentar o gato holográfico no letreiro.", say = fala_escolha("Comentar o gato holográfico no letreiro.") },
+            { id = "sair", text = "Deixar Taro voltar a dormir.", say = fala_escolha("Deixar Taro voltar a dormir.") }
+        })
+        if c == "horario" then
+            Character.say("taro", "Cinco da manhã. Caldo começa antes do sol, quando ele resolve aparecer.")
+        elseif c == "gato" then
+            Character.say("taro", "O braço quebrou faz sete anos. Meu pai mandou deixar assim. É o gato mais honesto da avenida.")
+        else
+            Character.say("taro", "Boa escolha. O silêncio é de graça, pelo menos até eu abrir.")
+        end
+        return
+    end
     Narrator.say("O Lámen do Taro tem seis banquetas e cinco ocupadas. Atrás do balcão, um homem de ombros largos e antebraços cobertos de marcas redondas de queimadura grita pedidos em japonês, português e numa mistura de termos de oficina e palavrões.")
     Narrator.say("Num canto, um garoto de capuz não fez pedido nenhum. Taro empurra uma tigela até ele junto com os hashis, sem olhar, e vira de costas para não ter que ouvir agradecimento.")
-    Character.say("taro", "Banqueta da ponta, " .. (Player.name() or "você") .. "! Primeira vez? Dá para ver. Você olha o gato do holograma como se ele fosse responder.")
+    Character.say("taro", "Banqueta da ponta! Primeira vez? Dá para ver. Você olha o gato do holograma como se ele fosse responder.", { effect = "wave", color = "#ffbd66", speed = 18 })
+    apresentar("taro")
     local c = Scene.choice({
         { id = "lamen", text = "Pedir um lámen.", say = fala_escolha("Pedir um lámen.") },
         { id = "garoto", text = "Perguntar sobre o garoto de capuz.", say = fala_escolha("Perguntar sobre o garoto de capuz.") },
@@ -1665,7 +1806,8 @@ Scene.create("intro_taro", function()
         end
         conf("taro", 1)
     elseif c == "garoto" then
-        Character.say("taro", "O Juca? Aparece cedo e fica até eu fechar. Eu não cobro. Se cobrasse, ele ia começar a pagar com coisa que não tem.")
+        Character.say("taro", "O Juca. Aparece cedo e fica até eu fechar. Eu não cobro. Se cobrasse, ele ia começar a pagar com coisa que não tem.")
+        State.set("conhece_juca", true)
         Narrator.say("Taro limpa o balcão com um pano duas vezes no mesmo lugar.")
         Character.say("taro", "A mãe dele toma Bruma. Quando ela esquece que tem filho, a comida vem daqui. Só isso.")
         conf("taro", 2)
@@ -1681,7 +1823,8 @@ Scene.create("intro_sal", function()
     limpa()
     Narrator.say("A clínica tem uma única luz de cirurgia funcionando. Embaixo dela, um homem de jaleco sujo costura a coxa de um garoto de uns quinze anos, que morde um pano. Na bancada, uma caneca de café sem alça e uma garrafa de uísque sem rótulo, na mesma altura.")
     curioso("Um prontuário aberto na bancada, de letra miúda: 'Paciente: homem, 31, brumado. Overdose. Ala dos fundos.' Embaixo, em outra caneta: 'Terceiro este mês. Mesmo quarteirão.'")
-    Character.say("sal", "Fecha a porta. Chuva ácida faz o antisséptico trabalhar em dobro. Você, de pé aí. Segura a lâmpada. Não, a outra mão. Isso.")
+    Character.say("sal", "Fecha a porta. Chuva ácida faz o antisséptico trabalhar em dobro. Você, de pé aí. Segura a lâmpada. Não, a outra mão. Isso.", { effect = "wave", color = "#ffb58a", speed = 18 })
+    apresentar("sal")
     local c = Scene.choice({
         { id = "segurar", text = "Segurar a lâmpada.", say = fala_escolha("Segurar a lâmpada.") },
         { id = "preco", text = "Perguntar o preço do atendimento.", say = fala_escolha("Perguntar o preço do atendimento.") },
@@ -1708,7 +1851,8 @@ Scene.create("intro_pixel", function()
     limpa()
     if World.player_room() == "telhado" then
         Narrator.say("Na beira do telhado, de costas, uma garota de moletom largo balança as pernas no vazio. Ao lado dela, um cobertor térmico dobrado, uma garrafa de energético e um pacote de balas em forma de engrenagem. Ela não vira.")
-        Character.say("pixel", "Se vai pular, espera eu sair. Se vai olhar, senta onde o vento não bate. É ali, perto da caixa d'água.")
+        Character.say("pixel", "Se vai pular, espera eu sair. Se vai olhar, senta onde o vento não bate. É ali, perto da caixa d'água.", { effect = "wave", color = "#6fe3ff", speed = 18 })
+        apresentar("pixel")
         local c = Scene.choice({
             { id = "sentar", text = "Sentar perto da caixa d'água.", say = fala_escolha("Sentar perto da caixa d'água.") },
             { id = "perguntar", text = "'Quem é você?'", say = fala_escolha("'Quem é você?'") }
@@ -1723,11 +1867,12 @@ Scene.create("intro_pixel", function()
         end
     else
         Narrator.say("No terminal do fundo, uma garota de moletom largo e cabelo azul preso com um lápis disputa algo contra dois adultos que a cercam. Três janelas de aposta piscam nas telas dela. Ela mastiga uma bala, digita sem olhar o teclado e comenta tudo em voz alta:")
-        Character.say("pixel", "Não, não, vai para o buraco... é assim, olha, é assim... pronto.")
+        Character.say("pixel", "Não, não, vai para o buraco... é assim, olha, é assim... pronto.", { effect = "glitch", color = "#6fe3ff", speed = 16 })
         Narrator.say("As duas telas dos adultos ficam vermelhas ao mesmo tempo. Ela estica a mão aberta sem tirar os olhos do próprio monitor.")
         Character.say("pixel", "Pagam, ou eu mostro o histórico de vocês para a mãe de vocês?")
         Narrator.say("Um dos homens tira notas amassadas do bolso e deixa na mão dela. O outro sai sem dizer nada. Ela guarda o dinheiro no moletom e finalmente olha para você.")
         Character.say("pixel", "Você olha demais para as minhas telas. Isso quer dizer que não entende nada ou entende demais. Qual dos dois?")
+        apresentar("pixel")
         local c = Scene.choice({
             { id = "nada", text = "'Não entendo nada.'", say = fala_escolha("'Não entendo nada.'") },
             { id = "entendo", text = "'Entendo o suficiente.'", say = fala_escolha("'Entendo o suficiente.'") },
@@ -1751,8 +1896,9 @@ end)
 Scene.create("intro_mira", function()
     limpa()
     Narrator.say("Num reservado perto da saída, uma mulher de casaco cinza-escuro mexe um copo de água sem gelo. Está sentada de frente para a porta e com a parede nas costas. A cada pessoa que entra, o polegar dela bate uma vez na lateral do copo. Quando você entra, bate duas.")
-    Character.say("mira", "{player.nome}. Senta. Não aí, tem corrente de ar. Eu quero que você me ouça.")
-    Narrator.say("Ela desliza sobre a mesa um cartão de dados: seu nome completo, o endereço da cápsula, a data de vencimento da dívida e o valor, com os juros por dia. Tudo impresso em fonte pequena, como uma empresa imprimiria.")
+    Character.say("mira", "Você. Senta. Não aí, tem corrente de ar. Eu quero que você me ouça.", { effect = "neon", color = "#e8bbff", speed = 18 })
+    apresentar("mira")
+    Narrator.say("Ela desliza sobre a mesa um cartão de dados: o número da sua cápsula, o endereço do Bloco 14, a data de vencimento da dívida e o valor, com os juros por dia. Não há nome, só um identificador de contrato impresso em fonte pequena, como uma empresa faria.")
     Character.say("mira", "Não é ameaça. É currículo. Eu só trabalho com quem eu conheço.")
     local c = Scene.choice({
         { id = "quem", text = "'Quem é você?'", say = fala_escolha("'Quem é você?'") },
@@ -1772,7 +1918,7 @@ Scene.create("intro_mira", function()
         Character.say("mira", "Ótimo. Alguém com coragem de mentir é mais útil do que alguém que diz a verdade devagar. Continue.")
         conf("mira", 1)
     end
-    Character.say("mira", "Um mensageiro da Helix morreu nas Docas esta madrugada. Carregava um chip chamado ORFEU. Quero esse chip antes que os cães da Helix o encontrem. Pago mil e quinhentos. Adianto quinhentos agora.")
+    Character.say("mira", "Um mensageiro da Helix morreu nas Docas esta madrugada. Carregava um chip chamado ORFEU. Quero esse chip antes que os cães da Helix o encontrem. Pago mil e quinhentos. Adianto quinhentos agora.", { effect = "pulse", color = "#e8bbff", speed = 18 })
     local d = Scene.choice({
         { id = "aceitar", text = "'Aceito. Onde começo?'", say = fala_escolha("'Aceito. Onde começo?'") },
         { id = "orfeu", text = "'O que é ORFEU?'", say = fala_escolha("'O que é ORFEU?'") },
@@ -1803,7 +1949,8 @@ Scene.create("intro_qi", function()
     limpa()
     Narrator.say("Em frente ao armazém, sob uma lona e uma lâmpada pendurada num fio, uma senhora de cabelo branco em trança serve chá de um bule de ferro em três xícaras de porcelana. Os óculos dela são pequenos e redondos. Dois homens de casaco comprido estão de pé atrás da cadeira e não olham para nada.")
     Narrator.say("Ela põe um livro-caixa fechado ao lado do bule, sem pressa, como quem arruma a mesa para jantar.")
-    Character.say("qi", "Meu " .. trat() .. ". Eu já te conhecia pela voz. Pelo rosto eu só conhecia no contrato.")
+    Character.say("qi", "Meu " .. trat() .. ". O contrato já me trouxe até você. O rosto é só confirmação.", { effect = "pulse", color = "#ffbd66", speed = 18 })
+    apresentar("qi")
     local c = Scene.choice({
         { id = "tres", text = "'Por que três xícaras?'", say = fala_escolha("'Por que três xícaras?'") },
         { id = "chá", text = "Aceitar o chá sem dizer nada.", say = fala_escolha("Aceitar o chá sem dizer nada.") },
@@ -1821,7 +1968,7 @@ Scene.create("intro_qi", function()
     if m == "mae" then Narrator.say("Qi vira uma página do livro-caixa sem abrir os olhos e lê de memória: 'Sua mãe. Quarto 214, alta em dezenove de março.' Ela olha para você. 'Eu não gosto de gente que paga em silêncio.'")
     elseif m == "aposta" then Narrator.say("Qi coloca um dado de osso na mesa, vira para o seis e empurra com um dedo até você. 'Lembrança de uma noite em que você perdeu com muita elegância.'")
     elseif m == "implante" then Narrator.say("Qi olha para a nuca de quem está na frente dela e franze a testa: 'Que cirurgião fez isso? Dá para ver a emenda daqui.'")
-    else Narrator.say("Qi abre o livro-caixa em uma página marcada com fita azul. O nome do seu irmão está riscado com uma linha só, e o seu foi escrito logo abaixo, com a mesma caneta.") end
+    else Narrator.say("Qi abre o livro-caixa em uma página marcada com fita azul. O nome do seu irmão está riscado com uma linha só; logo abaixo, a dívida foi transferida para o identificador da sua cápsula, escrito com a mesma caneta.") end
     Character.say("qi", "De manhã eu atendo no armazém, atrás do guindaste azul. À noite eu atendo aqui. Se quiser trabalhar o desconto, eu tenho serviço que não precisa de assinatura.")
     Room.reveal("docas", "armazem")
     conf("qi", 1)
@@ -1836,7 +1983,8 @@ Scene.create("intro_rex", function()
     end
     Narrator.say("Ele tem uma orelha amassada, cicatrizes na cabeça raspada e os nós dos dedos mais largos do que os de qualquer pessoa que você já viu. Num banco, três tigelas de lámen vazias empilhadas.")
     Narrator.say("Rex pega um par de luvas do banco e joga na sua direção sem avisar.")
-    Character.say("rex", "Segura.")
+    Character.say("rex", "Segura.", { effect = "shake", color = "#ff6b72", speed = 16 })
+    apresentar("rex")
     local c = Scene.choice({
         { id = "pegar", text = "Pegar as luvas.", say = fala_escolha("Pegar as luvas.") },
         { id = "devolver", text = "Jogar as luvas de volta.", say = fala_escolha("Jogar as luvas de volta.") },
@@ -1863,13 +2011,14 @@ Scene.create("intro_lyra", function()
     limpa()
     if World.player_room() == "torre_helix" then
         Narrator.say("Uma mulher de blazer cinza atravessa o saguão seguida por quatro pessoas que anotam o que ela diz sem olhar para as próprias mãos. Ela não reduz o passo, mas para quando passa por você, a dois metros, e vira só a cabeça.")
-        Character.say("lyra", "Visitante sem convite no meu saguão. Interessante.", { emotion = "fria" })
+        Character.say("lyra", "Visitante sem convite no meu saguão. Interessante.", { effect = "neon", color = "#bba8ff", speed = 18 })
     else
         Narrator.say("No balcão, uma mulher de blazer cinza e batom escuro lê num tablet fino. Uma taça de vinho tinto está parada ao lado, intocada, no mesmo ponto do balcão onde Bartô a colocou. Ela não olha para você. Fala com o tablet.")
-        Character.say("lyra", "A mesa ao lado da minha está livre. Pode sentar. Ou pode ficar em pé e parecer nervoso. Os dois são úteis.", { emotion = "fria" })
+        Character.say("lyra", "A mesa ao lado da minha está livre. Pode sentar. Ou pode ficar em pé e parecer nervoso. Os dois são úteis.", { effect = "neon", color = "#bba8ff", speed = 18 })
     end
     Narrator.say("Quando finalmente olha para você, tem olhos de quem já terminou de ler.")
-    Character.say("lyra", "Lyra Kane. Supervisão Operacional, Distrito 9. Helix.")
+    apresentar("lyra")
+    Character.say("lyra", "Lyra Kane. Supervisão Operacional, Distrito 9. Helix.", { effect = "pulse", color = "#bba8ff", speed = 18 })
     Narrator.say("Ela vira um cartão preto de acesso sobre o balcão, com o logotipo para baixo.")
     local c = Scene.choice({
         { id = "porque", text = "'Por que está aqui?'", say = fala_escolha("'Por que está aqui?'") },
@@ -1885,7 +2034,7 @@ Scene.create("intro_lyra", function()
         conf("lyra", 1)
     elseif c == "blefe" then
         Narrator.say("Um canto da boca dela sobe meio milímetro.")
-        Character.say("lyra", "Gosto de gente que não pede desculpa. Você deve três mil a uma senhora de chá, e eu gastei isso em vinho este ano. Não vou oferecer nada. As pessoas se vendem melhor quando percebem sozinhas.")
+        Character.say("lyra", "Gosto de gente que não pede desculpa. Você deve três mil a uma credora, e eu gastei isso em vinho este ano. Não vou oferecer nada. As pessoas se vendem melhor quando percebem sozinhas.", { effect = "neon", color = "#bba8ff", speed = 18 })
         conf("lyra", 2)
     else
         Narrator.say("Você se afasta. Atrás de você, o tablet continua aceso. Ela não vira a página.")
@@ -1897,10 +2046,24 @@ end)
 Scene.create("intro_zeca", function()
     limpa()
     Narrator.say("Algo se mexe num cano de esgoto dobrado contra a parede. Uma mão sai segurando um cartão laminado, depois um rosto magro de olheiras fundas e capuz xadrez. Ele olha para as duas pontas do beco antes de falar.")
-    Character.say("zeca", "Psiu. Quem te mandou?")
+    Character.say("zeca", "Psiu. Quem te mandou?", { effect = "glitch", color = "#a7efbf", speed = 16 })
+    local ouviu_camelo = State.get("rumor_zeca_camelo")
+    local ouviu_mira = State.get("rumor_zeca_mira")
+    local texto_origem
+    local fala_origem
+    if ouviu_camelo then
+        texto_origem = "'A camelô da feira disse que você tem o que não se vende em feira.'"
+        fala_origem = "A camelô da feira disse que você tem o que não se vende em feira."
+    elseif ouviu_mira then
+        texto_origem = "'Mira Voss disse que você vende crachás.'"
+        fala_origem = "Mira Voss disse que você vende crachás."
+    else
+        texto_origem = "'Encontrei seu esconderijo por acaso.'"
+        fala_origem = "Encontrei seu esconderijo por acaso."
+    end
     local c = Scene.choice({
         { id = "ninguem", text = "'Ninguém me mandou.'", say = fala_escolha("'Ninguém me mandou.'") },
-        { id = "camelo", text = "'A camelô da feira disse que você tem o que não se vende em feira.'", say = fala_escolha("'A camelô da feira disse que você tem o que não se vende em feira.'") },
+        { id = "origem", text = texto_origem, say = fala_origem },
         { id = "sair", text = "Ir embora.", say = fala_escolha("Ir embora.") }
     })
     if c == "sair" then
@@ -1908,48 +2071,106 @@ Scene.create("intro_zeca", function()
         return
     elseif c == "ninguem" then
         Character.say("zeca", "Ninguém. Ninguém é o melhor cliente. Não deixa registro, não conta para ninguém, não pergunta o preço duas vezes.")
-    else
+    elseif ouviu_camelo then
         Character.say("zeca", "A velha dos óculos. Fala demais, mas fala para quem precisa. Eu te vendo o que você precisar, desde que me chame de Zeca e esqueça de onde veio.")
+    elseif ouviu_mira then
+        Character.say("zeca", "Mira Voss conhece mercadoria, não conhece meus horários. Se ela te mandou, é porque você procura uma entrada. Vamos ver se merece uma.")
+    else
+        Character.say("zeca", "Por acaso? Então você tem olhos melhores do que a maioria. O cano parece lixo para quem não sabe o que procurar.")
     end
+    apresentar("zeca")
     Narrator.say("Ele abre o casaco. O forro é feito de bolsos: crachás plastificados, esferas cinzentas, saquinhos térmicos, três chips pretos em um estojo de óculos. Ele fecha o casaco antes de você contar.")
-    Character.say("zeca", "Zeca Fantasma. Nome de nascença não vale nada, o de rua vale muito. Se você precisar de crachá, bobina, kit médico ou aperto de mão que ninguém vê, é comigo. E se precisar de lembrança, vem na quarta, na sexta ou no sábado, na hora do mercado.")
+    Character.say("zeca", "Zeca Fantasma. Nome de nascença não vale nada, o de rua vale muito. Se você precisar de crachá, bobina, kit médico ou aperto de mão que ninguém vê, é comigo. E se precisar de lembrança, vem na quarta, na sexta ou no sábado, na hora do mercado.", { effect = "neon", color = "#a7efbf", speed = 18 })
     conf("zeca", 1)
 end)
 
-
--- CENAS ORIGINAIS DE MISSÃO, CONVERSA E FINAIS
-
 Scene.create("talk_ishi", function()
     limpa()
+    apresentar("ishi")
     local q = State.get("q_gato")
+    local a = ativ("ishi")
     if q == 0 then
-        Narrator.say("Dona Ishi está sentada no banco do corredor com uma caixa de ferramentas aberta. Ela separa parafusos por tamanho. Quando você passa, ela empurra um deles para longe da borda antes de cumprimentar.")
-        Character.say("ishi", "Você mora no 14-C, não é? A parede da sua cápsula vibra quando o elevador sobe. Já pedi para consertarem duas vezes.")
-        local primeiro = Scene.choice({
-            { id = "parede", text = "Dizer que também ouve o elevador.", say = fala_escolha("Dizer que também ouve o elevador.") },
-            { id = "ferramentas", text = "Perguntar o que ela está consertando.", say = fala_escolha("Perguntar o que ela está consertando.") },
-            { id = "cha", text = "Perguntar pelo cheiro de chá.", say = fala_escolha("Perguntar pelo cheiro de chá.") }
-        })
-        if primeiro == "parede" then
-            Character.say("ishi", "Então não sou só eu. Às três da manhã parece que alguém arrasta uma geladeira pelo teto.")
-        elseif primeiro == "ferramentas" then
-            Character.say("ishi", "A fechadura da 14-B. O rapaz perdeu a chave e está trabalhando no turno da noite.")
+        local topicos = {}
+        if a == "regando o bonsai" then
+            Narrator.say("Dona Ishi está ajoelhada diante do bonsai. Ela usa uma seringa sem agulha para molhar a terra sem encharcar as raízes. Ao perceber você, protege o vaso com a mão.")
+            Character.say("ishi", "Pouca água, muita paciência. Se eu me apressar, ele morre. Se eu esquecer, também.", { effect = "wave", color = "#9bd8b0", speed = 20 })
+            topicos = {
+                { id = "elevador", txt = "Comentar o ruído do elevador.", fn = function() Character.say("ishi", "Você também ouve? Às três da manhã parece que alguém arrasta uma geladeira pelo teto.") end },
+                { id = "bonsai", txt = "Perguntar como ela cuida do bonsai.", fn = function() Character.say("ishi", "Um pouco de água por vez. Kenji dizia que eu conversava mais com as plantas do que com ele.") end },
+                { id = "cha", txt = "Perguntar pelo cheiro de chá.", fn = function() Character.say("ishi", "Folha de verdade. Minha filha mandava de Okinawa. Agora só tenho o que guardei.") end }
+            }
+        elseif a == "ouvindo rádio" then
+            Narrator.say("Dona Ishi está sentada no banco do corredor, com o rádio de pilha apoiado no colo. Ela gira o botão de sintonia até a estática diminuir, mas não chega a desaparecer.")
+            Character.say("ishi", "A estação muda de frequência sozinha desde a última chuva. Mesmo assim, gosto de deixar ligado.")
+            topicos = {
+                { id = "radio", txt = "Perguntar o que ela está ouvindo.", fn = function() Character.say("ishi", "A previsão do tempo, notícias velhas e, às vezes, uma voz lendo nomes de ruas que já não existem.") end },
+                { id = "chiado", txt = "Perguntar por que o rádio chia.", fn = function() Character.say("ishi", "A antena está torta. Kenji dizia que consertava, mas sempre aparecia outra coisa para fazer.") end },
+                { id = "cha", txt = "Perguntar pelo cheiro de chá.", fn = function() Character.say("ishi", "Folha de verdade. Minha filha mandava de Okinawa. Agora só tenho o que guardei.") end }
+            }
+        elseif a == "olhando a feira" then
+            Narrator.say("Dona Ishi percorre as barracas sem tocar nas peças. Para diante de uma caixa de conectores, compara duas etiquetas e devolve uma peça ao lugar exato de onde veio.")
+            Character.say("ishi", "Na feira, quem olha com pressa paga duas vezes. Quem olha com calma às vezes descobre que não precisa comprar nada.")
+            topicos = {
+                { id = "feira", txt = "Perguntar o que ela observa na feira.", fn = function() Character.say("ishi", "Peças de reposição, sementes e notícias. As notícias são a única coisa que não cabe numa sacola.") end },
+                { id = "todos", txt = "Perguntar se ela vem à feira todos os dias.", fn = function() Character.say("ishi", "Quando posso. Os vendedores me conhecem; alguns conheceram Kenji também.") end },
+                { id = "cha", txt = "Perguntar pelo cheiro de chá.", fn = function() Character.say("ishi", "Folha de verdade. Minha filha mandava de Okinawa. Agora só tenho o que guardei.") end }
+            }
         else
-            Character.say("ishi", "Folha de verdade. Minha filha mandava de Okinawa. Agora só tenho o que guardei.")
+            Narrator.say("Dona Ishi está junto das caixas de cultivo, ajeitando as folhas e retirando uma erva daninha com a ponta dos dedos. Ela limpa a terra da mão antes de cumprimentar você.")
+            Character.say("ishi", "Planta não reclama quando a gente erra. Só para de crescer. Acho mais honesto que muita gente.")
+            topicos = {
+                { id = "horta", txt = "Perguntar se ela cuida da horta sozinha.", fn = function() Character.say("ishi", "Quase sempre. Kenji guardava sementes e dizia que um dia a gente teria um quintal de verdade.") end },
+                { id = "sementes", txt = "Perguntar de onde vieram as plantas.", fn = function() Character.say("ishi", "As sementes eram do Kenji. A Helix chamava de material não autorizado. Eu chamo de comida.") end },
+                { id = "cha", txt = "Perguntar pelo cheiro de chá.", fn = function() Character.say("ishi", "Folha de verdade. Minha filha mandava de Okinawa. Agora só tenho o que guardei.") end }
+            }
         end
-        Narrator.say("Ela fecha a caixa de ferramentas. Só então percebe que está segurando uma pequena coleira azul.")
-        Character.say("ishi", "Eu queria te pedir uma coisa. Meu Mochi sumiu ontem. É um gato-drone, pequeno, orelha esquerda torta. Ele costuma voltar quando sente o cheiro do chá, mas não voltou.")
+        menu(topicos, "Encerrar o assunto.")
+
+        if a == "regando o bonsai" then
+            Narrator.say("Ela deixa a seringa ao lado do vaso e pega uma pequena coleira azul, com uma das fivelas torta.")
+        elseif a == "ouvindo rádio" then
+            Narrator.say("Ela abaixa o volume do rádio e pega uma pequena coleira azul que estava dobrada ao lado do banco.")
+        elseif a == "olhando a feira" then
+            Narrator.say("Ela afasta uma sacola de peças e tira de dentro uma pequena coleira azul, com poeira presa na fivela.")
+        elseif a == "cuidando da horta" then
+            Narrator.say("Ela deixa o barbante sobre a caixa de cultivo e pega uma pequena coleira azul de dentro do bolso do colete.")
+        else
+            Narrator.say("Ela interrompe a tarefa por um instante e tira uma pequena coleira azul do bolso do colete.")
+        end
+        Character.say("ishi", "Eu queria te pedir uma coisa. Meu Mochi sumiu ontem. É um gato-drone, pequeno, orelha esquerda torta. Ele costuma voltar quando sente o cheiro do chá, mas não voltou.", { effect = "wave", color = "#9bd8b0", speed = 20 })
+        local detalhe_texto, detalhe_fala
+        if a == "regando o bonsai" then
+            detalhe_texto, detalhe_fala = "Perguntar se alguém a ajuda com o bonsai.", "Você cuida desse bonsai sozinha?"
+        elseif a == "ouvindo rádio" then
+            detalhe_texto, detalhe_fala = "Perguntar se alguém já tentou consertar o rádio.", "Alguém já tentou consertar esse rádio?"
+        elseif a == "olhando a feira" then
+            detalhe_texto, detalhe_fala = "Perguntar se ela vem à feira todos os dias.", "Você vem à feira todos os dias?"
+        else
+            detalhe_texto, detalhe_fala = "Perguntar de quem são as sementes.", "De quem são essas sementes?"
+        end
         local c = Scene.choice({
             { id = "ajudar", text = "Perguntar onde ele foi visto pela última vez e oferecer ajuda.", say = fala_escolha("Perguntar onde ele foi visto pela última vez e oferecer ajuda.") },
             { id = "nao", text = "Dizer que está sem tempo.", say = fala_escolha("Dizer que está sem tempo.") },
-            { id = "detalhes", text = "Perguntar por que ela não chamou a manutenção.", say = fala_escolha("Perguntar por que ela não chamou a manutenção.") }
+            { id = "detalhes", text = detalhe_texto, say = detalhe_fala }
         })
         if c == "ajudar" then
             State.set("q_gato", 1)
             Character.say("ishi", "Ontem ouvi um miado perto do duto de ventilação. Depois um barulho de metal vindo da rua baixa. Não sei se era ele.")
             Narrator.say("Ela entrega a você uma pequena peça azul que se soltou da coleira. Há poeira escura presa na dobradiça.")
+        elseif c == "detalhes" then
+            if a == "regando o bonsai" then
+                Character.say("ishi", "Kenji me ensinou. Dizia que cuidar de uma árvore pequena era um jeito de lembrar que as coisas crescem devagar.")
+            elseif a == "ouvindo rádio" then
+                Character.say("ishi", "Um vizinho tentou trocar a antena. O rádio voltou a funcionar, mas a voz que eu queria ouvir não apareceu.")
+            elseif a == "olhando a feira" then
+                Character.say("ishi", "Venho quando preciso de alguma coisa e quando preciso sair um pouco do corredor. As duas coisas costumam acontecer juntas.")
+            else
+                Character.say("ishi", "As sementes eram do Kenji. Ele guardava cada uma em envelopes com a data e o nome da planta.")
+            end
+            ishi_retorna(a)
         else
             Character.say("ishi", "Entendo. A cidade é pesada demais para todos.")
+            ishi_retorna(a)
         end
     elseif q == 1 then
         Character.say("ishi", "Nenhuma notícia do Mochi? Ele tem a orelha esquerda torta. Se brilhar azul, é ele.")
@@ -1968,35 +2189,76 @@ Scene.create("talk_ishi", function()
             Character.say("ishi", "Achou? Cadê ele?")
         end
     else
-        local h = Time.hour()
-        if h >= 20 or h < 5 then
+        if a == "ouvindo rádio" then
             Character.say("ishi", "O rádio hoje só fala de chuva e de dívida. Tome cuidado lá fora, " .. trat() .. ".")
+        elseif a == "regando o bonsai" then
+            Character.say("ishi", "Até o bonsai parece mais tranquilo hoje. Mochi dorme no meu colo quando volto para casa.")
+        elseif a == "olhando a feira" then
+            Character.say("ishi", "Na feira, todo mundo pergunta pelo gato. Ninguém admite que sente falta dele, mas perguntam.")
+        elseif a == "cuidando da horta" then
+            Character.say("ishi", "Mochi gosta de dormir entre as caixas de cultivo. Agora as plantas crescem sem ele derrubar tudo.")
         else
             Character.say("ishi", "Mochi dorme no meu colo agora. A casa voltou a ter som de gente.")
         end
     end
 end)
 
+local function situacao_entrega(id)
+    local sala = Character.room(id)
+    local atividade = ativ(id)
+    if type(atividade) == "string" and atividade:find("dormindo", 1, true) then
+        if id == "sal" then return "Sal está dormindo em pé na clínica." end
+        if id == "pixel" then return "Pixel dormiu sobre o teclado no NetHaven." end
+    end
+    if id == "sal" then
+        if sala == "clinica" then return "Sal está na clínica, atendendo." end
+        if sala == "bar_sinapse" then return "Sal foi ao Bar Sinapse para beber depois do plantão." end
+        if sala == "arena" then return "Sal está na arena, remendando os lutadores." end
+    elseif id == "pixel" then
+        if sala == "nexus" then return "Pixel está no NetHaven, trabalhando nos terminais." end
+        if sala == "telhado" then return "Pixel está no telhado, observando as luzes da Torre." end
+        if sala == "refugio" then return "Pixel está no refúgio, trabalhando nos servidores da Rede Livre." end
+    elseif id == "rex" then
+        if sala == "noodle_bar" then return "Rex está no Lámen, fazendo uma pausa para comer." end
+        if sala == "clinica" then return "Rex está na clínica, tratando os cortes com Sal." end
+        if sala == "vestiario" then return "Rex está no vestiário, enfaixando as mãos." end
+        if sala == "arena" then
+            if atividade == "no ringue" then return "Rex está no ringue." end
+            return "Rex está treinando na arena."
+        end
+    end
+    local nomes = {
+        corredor = "corredor", feira = "feira", telhado = "telhado", nexus = "NetHaven",
+        clinica = "clínica", bar_sinapse = "Bar Sinapse", arena = "arena",
+        vestiario = "vestiário", noodle_bar = "Lámen do Taro", docas = "Docas",
+        armazem_qi = "armazém de Qi", becos = "becos", mercado_noturno = "Mercado Noturno"
+    }
+    return nome_de(id) .. " está no " .. (nomes[sala] or "outro ponto da cidade") .. "."
+end
+
 Scene.create("talk_taro", function()
     limpa()
+    apresentar("taro")
     local q = State.get("q_taro")
     if q == 0 then
         Narrator.say("Taro termina de servir duas tigelas. Uma mulher paga em moedas; o garoto de capuz no canto recebe a dele sem abrir a carteira. Taro limpa as mãos no avental e olha para você.")
-        Character.say("taro", "Você já reparou que ninguém olha para quem está comendo? É a única hora em que a avenida deixa a gente em paz.")
+        Character.say("taro", "Você já reparou que ninguém olha para quem está comendo? É a única hora em que a avenida deixa a gente em paz.", { effect = "wave", color = "#ffbd66", speed = 18 })
         local papo = Scene.choice({
             { id = "comida", text = "Perguntar por que ele serve o garoto de graça.", say = fala_escolha("Perguntar por que ele serve o garoto de graça.") },
             { id = "gato", text = "Perguntar pelo gato holográfico no letreiro.", say = fala_escolha("Perguntar pelo gato holográfico no letreiro.") },
             { id = "turno", text = "Perguntar se ele sempre trabalha sozinho.", say = fala_escolha("Perguntar se ele sempre trabalha sozinho.") }
         })
         if papo == "comida" then
-            Character.say("taro", "A mãe dele usa Bruma. Tem dias em que ela lembra que tem filho, tem dias em que não. O garoto não tem culpa.")
+            Character.say("taro", "Aquele garoto de capuz, ali no canto, é o Juca. A mãe dele usa Bruma. Tem dias em que ela lembra que tem filho, tem dias em que não. O garoto não tem culpa.")
+            State.set("conhece_juca", true)
         elseif papo == "gato" then
             Character.say("taro", "Era para ser um gato inteiro. O fornecedor cortou custo e entregou sem uma pata. Meu pai mandou deixar assim.")
         else
             Character.say("taro", "Meu irmão fazia a noite. Foi para a Helix e nunca voltou. O aluguel não espera por luto.")
         end
         Narrator.say("Um pedido apita na cozinha. Taro desliga o aviso com o cotovelo, mas não se mexe para pegar a bandeja.")
-        Character.say("taro", "Preciso levar três tigelas para gente que não consegue sair do posto. Sal está com paciente, Pixel não larga o terminal e Rex não sai do ringue. Você pode levar?")
+        local destinos = situacao_entrega("sal") .. " " .. situacao_entrega("pixel") .. " " .. situacao_entrega("rex")
+        Character.say("taro", "Preciso levar três tigelas. " .. destinos .. " Você pode levar para eles?")
         local c = Scene.choice({
             { id = "sim", text = "Aceitar as entregas.", say = fala_escolha("Aceitar as entregas.") },
             { id = "perguntar", text = "Perguntar quanto ele paga e por que não manda um drone.", say = fala_escolha("Perguntar quanto ele paga e por que não manda um drone.") },
@@ -2011,7 +2273,7 @@ Scene.create("talk_taro", function()
             Character.say("taro", "Tá bom, tá bom. Mas a oferta continua de pé!")
         end
     elseif q == 1 then
-        Character.say("taro", "Faltam " .. (3 - State.get("entregas")) .. " entregas. Sal fica na clínica de dia, Pixel no NetHaven, Rex na arena.")
+        Character.say("taro", "Faltam " .. (3 - State.get("entregas")) .. " entregas. " .. situacao_entrega("sal") .. " " .. situacao_entrega("pixel") .. " " .. situacao_entrega("rex"))
     elseif q == 2 then
         Character.say("taro", "Todas entregues? Você é um herói do vapor!")
         ganha(200)
@@ -2020,21 +2282,33 @@ Scene.create("talk_taro", function()
         State.add("rep_rua", 1)
         Character.say("taro", "E daqui pra frente, lámen pra você custa só 8 ¢. Família não paga preço cheio.")
     else
-        Character.say("taro", "Tigela fresquinha quando quiser, " .. g("amigo", "amiga", Player.name()) .. "!")
+        Character.say("taro", "Tigela fresquinha quando quiser, " .. g("amigo", "amiga", nome_conhecido("taro", "meu bem")) .. "!")
     end
 end)
 
 Scene.create("talk_sal", function()
     limpa()
+    local primeira = not State.get("apresentou_sal")
+    local sala = World.player_room()
+    apresentar("sal")
     entrega("entregou_sal")
-    Character.say("sal", "Quer carne nova ou só remendo?")
+    if primeira and sala ~= "clinica" then
+        Character.say("sal", "Doc Sal. Minha clínica fica na Avenida Baixa. Hoje estou fora do consultório, então nada de cirurgia improvisada.", { effect = "pulse", color = "#ffb58a", speed = 18 })
+    elseif sala == "bar_sinapse" then
+        Character.say("sal", "Hoje eu não vim atender. Vim beber até a cidade parar de doer. Se estiver sangrando, amanhã eu cobro mais caro.", { effect = "pulse", color = "#ffb58a", speed = 18 })
+    elseif sala == "arena" then
+        Character.say("sal", "Se algum lutador abrir a cabeça, me chama. Hoje só estou remendando quem insiste em voltar ao ringue.", { effect = "pulse", color = "#ffb58a", speed = 18 })
+    else
+        Character.say("sal", "Quer carne nova ou só remendo? Aqui na clínica, pelo menos, eu tenho luz e instrumentos.", { effect = "pulse", color = "#ffb58a", speed = 18 })
+    end
     while true do
         local c = Scene.choice({
             { id = "reflexos", text = "Instalar Reflexos Sinápticos (200 ¢).", say = fala_escolha("Instalar Reflexos Sinápticos (200 ¢)."),
-              conditions = function() return not State.get("implante_reflexos") and State.get("creditos") >= 200 end },
+              conditions = function() return sala == "clinica" and not State.get("implante_reflexos") and State.get("creditos") >= 200 end },
             { id = "neuro", text = "Instalar Neuroport (600 ¢ + Bobina Neural).", say = fala_escolha("Instalar Neuroport (600 ¢ + Bobina Neural)."),
-              conditions = function() return not State.get("implante_neuroport") and State.get("creditos") >= 600 and Inventory.has("bobina_neural") end },
+              conditions = function() return sala == "clinica" and not State.get("implante_neuroport") and State.get("creditos") >= 600 and Inventory.has("bobina_neural") end },
             { id = "papo", text = "Perguntar o que Sal acha da cidade.", say = fala_escolha("Perguntar o que Sal acha da cidade.") },
+            { id = "bebida", text = "Perguntar por que ele está bebendo.", say = fala_escolha("Perguntar por que ele está bebendo."), conditions = function() return sala == "bar_sinapse" end },
             { id = "sair", text = "Sair.", say = fala_escolha("Sair.") }
         })
         if c == "sair" then break end
@@ -2053,6 +2327,8 @@ Scene.create("talk_sal", function()
             State.set("implante_neuroport", true)
             State.subtract("saude", 20)
             Narrator.say("(Implante: Neuroport. Você sente a rede como uma segunda pele.)")
+        elseif c == "bebida" then
+            Character.say("sal", "Porque hoje perdi dois pacientes e salvei um. Não existe dose que faça a conta fechar. Amanhã eu volto para a clínica.", { effect = "pulse", color = "#ffb58a", speed = 18 })
         else
             Character.say("sal", "O Distrito 9 está cheio de gente doente. Eu só costuro quem ainda chega andando.")
         end
@@ -2061,26 +2337,39 @@ end)
 
 Scene.create("talk_pixel", function()
     limpa()
+    local primeira = not State.get("apresentou_pixel")
+    local sala = World.player_room()
+    apresentar("pixel")
     entrega("entregou_pixel")
-    if State.get("q_main") >= 3 then
-        Character.say("pixel", "Se a Voz te escolheu, o bueiro nos becos leva ao nosso refúgio. Procure o desenho de um olho riscado.")
+    if primeira and sala == "telhado" then
+        Character.say("pixel", "Pixel. É o nome que uso na rede. Aqui em cima eu só observo as luzes; para mexer nos sistemas, prefiro o NetHaven lá embaixo.", { effect = "glitch", color = "#6fe3ff", speed = 16 })
+    elseif sala == "telhado" then
+        Character.say("pixel", "As luzes da Torre piscam em padrões. Não trouxe um terminal para cá, então hoje é só conversa.", { effect = "wave", color = "#6fe3ff", speed = 18 })
+    else
+        Character.say("pixel", "E aí? Precisa de código, de sorte ou de uma mente melhor?", { effect = "glitch", color = "#6fe3ff", speed = 16 })
     end
-    Character.say("pixel", "E aí? Precisa de código, de sorte ou de uma mente melhor?")
+    if State.get("q_main") >= 3 then
+        if sala == "refugio" then
+            Character.say("pixel", "Chegou. Aqui a Rede Livre mantém os servidores longe das câmeras da Helix. Não é bonito, mas é nosso.", { effect = "neon", color = "#6fe3ff", speed = 18 })
+        else
+            Character.say("pixel", "Se a Voz te escolheu, o bueiro nos becos leva ao nosso refúgio. Procure o desenho de um olho riscado.", { effect = "neon", color = "#6fe3ff", speed = 18 })
+        end
+    end
     while true do
         local custo = (State.get("hacker") + 1) * 100
         local c = Scene.choice({
             { id = "aula", text = "Aprender hacking (" .. custo .. " ¢).",
               say = fala_escolha("Vou aprender hacking por " .. custo .. " créditos."),
-              conditions = function() return State.get("hacker") < 3 and State.get("creditos") >= custo end },
+              conditions = function() return sala == "nexus" and State.get("hacker") < 3 and State.get("creditos") >= custo end },
             { id = "decifrar", text = "Decifrar um chip cifrado (150 ¢, ou grátis se você já hackeia).", say = fala_escolha("Decifrar um chip cifrado (150 ¢, ou grátis se você já hackeia)."),
-              conditions = function() return State.get("q_main") == 2 and Inventory.has("chip_cifrado") and (State.get("hacker") >= 1 or State.get("creditos") >= 150) end },
+              conditions = function() return sala == "nexus" and State.get("q_main") == 2 and Inventory.has("chip_cifrado") and (State.get("hacker") >= 1 or State.get("creditos") >= 150) end },
             { id = "papo", text = "Conversar.", say = fala_escolha("Conversar.") },
             { id = "sair", text = "Sair.", say = fala_escolha("Sair.") }
         })
         if c == "sair" then break end
         if c == "aula" then
             State.subtract("creditos", custo)
-            Narrator.say("Pixel te enfia num terminal e desfila atalhos de teclado como feitiços. (-" .. custo .. " ¢)")
+            Narrator.say("Pixel puxa uma cadeira diante de um terminal livre e desfila atalhos de teclado como feitiços. (-" .. custo .. " ¢)", { effect = "glitch", color = "#6fe3ff", speed = 18 })
             Scene.delay(90)
             State.add("hacker", 1)
             Narrator.say("(Hacking nível " .. State.get("hacker") .. ".)")
@@ -2091,7 +2380,7 @@ Scene.create("talk_pixel", function()
             Narrator.say("A tela escurece. Uma voz de mulher, rouca, enche a sala: 'Quem está aí? Se for da Helix, desligue agora.'")
             Character.say("pixel", "Merda. Isso não é um arquivo. É alguém.", { effect = "glitch", color = "#6fe3ff", speed = 16 })
             Narrator.say("O chip contém o núcleo de memória do projeto ORFEU: uma IA, presa num laboratório no subnível 9 da Torre Helix.")
-            Narrator.say("A voz se apresenta como 'Vesper'. Pede ajuda. Depois some.")
+            Narrator.say("A voz se apresenta como 'Vesper'. Pede ajuda. Depois some.", { effect = "neon", color = "#75d4ff", speed = 20 })
             State.set("q_main", 3)
             State.add("vozes", 1)
             Room.reveal("becos", "bueiro")
@@ -2104,6 +2393,12 @@ end)
 
 Scene.create("talk_mira", function()
     limpa()
+    local primeira = not State.get("apresentou_mira")
+    local sala = World.player_room()
+    apresentar("mira")
+    if primeira and sala ~= "bar_sinapse" then
+        Character.say("mira", "Mira Voss. Você ainda não me conhece, mas eu já conferi seu contrato com Qi. Não confunda isso com amizade; é só pesquisa.", { effect = "neon", color = "#e8bbff", speed = 18 })
+    end
     local q = State.get("q_main")
     if State.get("traiu_mira") then
         Narrator.say("Mira te encara, sem pestanejar. O bar inteiro parece prender a respiração.")
@@ -2111,8 +2406,12 @@ Scene.create("talk_mira", function()
         return
     end
     if q == 0 then
-        Character.say("mira", "Você veio. Boa. Escuta: um mensageiro da Helix morreu nas Docas esta madrugada. Carregava um chip chamado ORFEU.")
-        Character.say("mira", "Quero esse chip antes que os cães da Helix o encontrem. Pago 1.500 ¢. Adianto 500 agora.")
+        if primeira and sala ~= "bar_sinapse" then
+            Character.say("mira", "Já que estamos frente a frente: um mensageiro da Helix morreu nas Docas esta madrugada. Carregava um chip chamado ORFEU.", { effect = "pulse", color = "#e8bbff", speed = 18 })
+        else
+            Character.say("mira", "Você veio. Boa. Escuta: um mensageiro da Helix morreu nas Docas esta madrugada. Carregava um chip chamado ORFEU.", { effect = "pulse", color = "#e8bbff", speed = 18 })
+        end
+        Character.say("mira", "Quero esse chip antes que os cães da Helix o encontrem. Pago 1.500 ¢. Adianto 500 agora.", { effect = "pulse", color = "#e8bbff", speed = 18 })
         local c = Scene.choice({
             { id = "aceitar", text = "Aceito. Onde começo?", say = fala_escolha("Aceito. Onde começo?") },
             { id = "perguntar", text = "O que é ORFEU?", say = fala_escolha("O que é ORFEU?") },
@@ -2139,7 +2438,9 @@ Scene.create("talk_mira", function()
     elseif q == 2 then
         Character.say("mira", "Achou? Leve ao Pixel, no NetHaven. Ele decifra por você.")
     elseif q == 3 then
-        Character.say("mira", "Então é uma IA? Lena Orfeu... Vesper... Ouça: a Torre tem cinco entradas, mas nenhuma é fácil. Zeca vende crachás. O apagão do dia 4 desliga as câmeras.")
+        Character.say("mira", "Então é uma IA? Lena Orfeu... Vesper... Ouça: a Torre tem cinco entradas, mas nenhuma é fácil. Zeca vende crachás. O apagão do dia 4 desliga as câmeras.", { effect = "pulse", color = "#e8bbff", speed = 18 })
+        State.set("rumor_zeca", true)
+        State.set("rumor_zeca_mira", true)
     elseif q == 4 then
         Character.say("mira", "Está lá dentro? Respire. Pegue o núcleo e saia. A Helix não vai perdoar.")
     elseif q == 5 then
@@ -2151,7 +2452,14 @@ end)
 
 Scene.create("talk_qi", function()
     limpa()
-    Character.say("qi", "Meu " .. trat() .. ". Dívida: " .. State.get("divida") .. " ¢. Prazo: domingo.")
+    local primeira = not State.get("apresentou_qi")
+    local sala = World.player_room()
+    apresentar("qi")
+    if primeira and sala == "armazem_qi" then
+        Character.say("qi", "Madame Qi. É assim que me chamam quando não estão lendo meu contrato. Dívida: " .. State.get("divida") .. " ¢. Prazo: domingo.", { effect = "pulse", color = "#ffbd66", speed = 18 })
+    else
+        Character.say("qi", "Meu " .. trat() .. ". Dívida: " .. State.get("divida") .. " ¢. Prazo: domingo.", { effect = "pulse", color = "#ffbd66", speed = 18 })
+    end
     local c = Scene.choice({
         { id = "pagar", text = "Pagar parte da dívida.", say = fala_escolha("Pagar parte da dívida."), conditions = function() return State.get("creditos") >= 50 and State.get("divida") > 0 end },
         { id = "trabalho", text = "Perguntar sobre trabalhos.", say = fala_escolha("Perguntar sobre trabalhos.") },
@@ -2159,7 +2467,8 @@ Scene.create("talk_qi", function()
     })
     if c == "pagar" then Scene.call("pagar_qi")
     elseif c == "trabalho" then
-        Character.say("qi", "Faço descontos para quem me serve. Use a opção 'trabalho sujo' aqui nas docas. Uma vez por dia. Sempre há um risco.")
+        local lugar = sala == "armazem_qi" and "neste armazém" or "nas docas"
+        Character.say("qi", "Faço descontos para quem me serve. Use a opção 'trabalho sujo' " .. lugar .. ". Uma vez por dia. Sempre há um risco.", { effect = "pulse", color = "#ffbd66", speed = 18 })
     end
 end)
 
@@ -2184,15 +2493,25 @@ end)
 
 Scene.create("talk_rex", function()
     limpa()
+    local primeira = not State.get("apresentou_rex")
+    local sala = World.player_room()
+    local atividade = ativ("rex")
+    apresentar("rex")
     entrega("entregou_rex")
-    if not State.get("rex_amigo") then
-        Character.say("rex", "Você é o novato dos corredores, hein? Quer ser respeitado? Enfrente alguém no ringue. Ou treine comigo, se tiver estômago.")
+    if sala == "noodle_bar" then
+        Character.say("rex", primeira and "Rex. Não vim para brigar. Vim comer antes que o Taro feche a panela. Quer conversar ou vai ficar olhando minha tigela?" or "Não vim para brigar. Vim comer antes que o Taro feche a panela. Quer conversar ou vai ficar olhando minha tigela?", { effect = "shake", color = "#ff6b72", speed = 16 })
+    elseif sala == "clinica" then
+        Character.say("rex", primeira and "Rex. Sal está cuidando dos meus cortes. Se veio falar da rinha, fala baixo; ele odeia quando eu volto para lá antes de fechar os pontos." or "Sal está cuidando dos meus cortes. Se veio falar da rinha, fala baixo; ele odeia quando eu volto para lá antes de fechar os pontos.", { effect = "shake", color = "#ff6b72", speed = 16 })
+    elseif sala == "vestiario" then
+        Character.say("rex", primeira and "Rex. Estou enfaixando as mãos. Não encosta nas luvas molhadas. Quer saber da luta de hoje?" or "Estou enfaixando as mãos. Não encosta nas luvas molhadas. Quer saber da luta de hoje?", { effect = "shake", color = "#ff6b72", speed = 16 })
+    elseif not State.get("rex_amigo") then
+        Character.say("rex", primeira and "Rex. Aqui é onde treino. Quer aprender a aguentar um golpe ou só veio assistir?" or "Quer ser respeitado? Enfrente alguém no ringue. Ou treine comigo, se tiver estômago.", { effect = "shake", color = "#ff6b72", speed = 16 })
     else
-        Character.say("rex", "Fala, " .. g("campeão", "campeã", Player.name()) .. ". A sua cara no ringue vende ingresso.")
+        Character.say("rex", "Fala, " .. g("campeão", "campeã", nome_conhecido("rex", "meu bem")) .. ". A sua cara no ringue vende ingresso.", { effect = "shake", color = "#ff6b72", speed = 16 })
     end
     local c = Scene.choice({
         { id = "treino", text = "Treinar com Rex (1 h, vai doer).", say = fala_escolha("Treinar com Rex (1 h, vai doer)."),
-          conditions = function() return State.get("treino") < 3 and State.get("saude") > 30 end },
+          conditions = function() return sala == "arena" and atividade == "treinando" and State.get("treino") < 3 and State.get("saude") > 30 end },
         { id = "papo", text = "Perguntar sobre a rinha.", say = fala_escolha("Perguntar sobre a rinha.") },
         { id = "sair", text = "Sair.", say = fala_escolha("Sair.") }
     })
@@ -2210,7 +2529,18 @@ end)
 
 Scene.create("talk_zeca", function()
     limpa()
-    Character.say("zeca", "Psiu. Bom te ver. Ou nem tanto. Preciso de uma coisa, tenho de outra.")
+    local primeira = not State.get("apresentou_zeca")
+    local sala = World.player_room()
+    apresentar("zeca")
+    if primeira and State.get("rumor_zeca_camelo") then
+        Character.say("zeca", "A velha dos óculos falou de mim? Ela sabe que não gosto de visita anunciada. Mas já que veio, vamos ao que interessa.", { effect = "glitch", color = "#a7efbf", speed = 16 })
+    elseif primeira and State.get("rumor_zeca_mira") then
+        Character.say("zeca", "Mira Voss te passou meu nome? Ela conhece meus produtos, não meus horários. Vamos ver o que você procura.", { effect = "glitch", color = "#a7efbf", speed = 16 })
+    elseif primeira and sala == "mercado_noturno" then
+        Character.say("zeca", "Zeca Fantasma. No mercado eu monto banca; nos becos eu negocio o que não pode ter etiqueta. Você chegou por conta própria?", { effect = "glitch", color = "#a7efbf", speed = 16 })
+    else
+        Character.say("zeca", "Psiu. Bom te ver. Ou nem tanto. Preciso de uma coisa, tenho de outra.", { effect = "glitch", color = "#a7efbf", speed = 16 })
+    end
     while true do
         local c = Scene.choice({
             { id = "cracha", text = "Comprar crachá falso da Helix (300 ¢).", say = fala_escolha("Comprar crachá falso da Helix (300 ¢)."),
@@ -2232,11 +2562,16 @@ end)
 
 Scene.create("talk_lyra", function()
     limpa()
+    local primeira = not State.get("apresentou_lyra")
+    apresentar("lyra")
     local aqui_torre = World.player_room() == "torre_helix"
+    if primeira and not aqui_torre then
+        Character.say("lyra", "Lyra Kane. Supervisão Operacional da Helix. Não se preocupe: eu já sei o suficiente sobre você para esta conversa.", { effect = "neon", color = "#bba8ff", speed = 18 })
+    end
     if aqui_torre then
-        Character.say("lyra", "Visitante sem convite no meu saguão. Interessante.", { emotion = "fria" })
+        Character.say("lyra", "Visitante sem convite no meu saguão. Interessante.", { effect = "neon", color = "#bba8ff", speed = 18 })
     else
-        Character.say("lyra", "Aquela mesa está livre. Sente. Ou fique em pé e pareça nervoso.", { emotion = "fria" })
+        Character.say("lyra", "Aquela mesa está livre. Sente. Ou fique em pé e pareça nervoso.", { effect = "neon", color = "#bba8ff", speed = 18 })
     end
     local c = Scene.choice({
         { id = "orfeu", text = "Perguntar discretamente sobre ORFEU.", say = fala_escolha("Perguntar discretamente sobre ORFEU."), conditions = function() return State.get("q_main") >= 1 end },
@@ -2399,7 +2734,7 @@ end)
 Scene.create("lab_confronto", function()
     limpa()
     Narrator.say("Você se aproxima do cilindro. Um alerta vermelho dispara. Passos pesados descem a escada.")
-    Character.say("lyra", "Parada aí. Dois passos e eu esqueço que já te vi.", { emotion = "fria" })
+    Character.say("lyra", "Parada aí. Dois passos e eu esqueço que já te vi.", { effect = "shake", color = "#ff5878", speed = 16 })
     Narrator.say("Lyra Kane aparece com uma arma de pulso apontada para o seu peito. Atrás dela, dois seguranças.")
     local c = Scene.choice({
         { id = "reflexos", text = "Desarmar Lyra com reflexos sinápticos.", say = fala_escolha("Desarmar Lyra com reflexos sinápticos."), conditions = function() return State.get("implante_reflexos") end },
@@ -2557,7 +2892,7 @@ end)
 Scene.create("drone_helix", function()
     limpa()
     Narrator.say("Um drone branco desce sem som, a luz vermelha da câmera te varrendo.")
-    Character.say("lyra", "(pelo alto-falante do drone) Identifique-se, cidadão. Sua assinatura térmica está associada a um incidente.", { emotion = "fria" })
+    Character.say("lyra", "(pelo alto-falante do drone) Identifique-se, cidadão. Sua assinatura térmica está associada a um incidente.", { effect = "glitch", color = "#ff5878", speed = 16 })
     local c = Scene.choice({
         { id = "fugir", text = "Mergulhar na multidão.", say = fala_escolha("Mergulhar na multidão.") },
         { id = "hack", text = "Hackear o drone.", say = fala_escolha("Hackear o drone."), conditions = function() return State.get("hacker") >= 1 end },
@@ -2646,7 +2981,7 @@ end)
 Scene.create("helix_cacadores", function()
     limpa()
     Narrator.say("Três figuras de terno branco bloqueiam o fim da rua. Os olhos brilham com implantes de rastreio.")
-    Character.say("lyra", "(pelo comunicador deles) Seu nível de ameaça subiu. Lamento.", { emotion = "fria" })
+    Character.say("lyra", "(pelo comunicador deles) Seu nível de ameaça subiu. Lamento.", { effect = "glitch", color = "#ff5878", speed = 16 })
     local c = Scene.choice({
         { id = "fugir", text = "Fugir pelos becos.", say = fala_escolha("Fugir pelos becos.") },
         { id = "hack", text = "Cegar os implantes deles.", say = fala_escolha("Cegar os implantes deles."), conditions = function() return State.get("hacker") >= 2 end },
@@ -3128,7 +3463,11 @@ Event.create("pri_telhado", {
 })
 Event.create("pri_refugio", {
     trigger = "enter_room", room = "refugio", once = true,
-    execute = function(ctx) Narrator.say("Mãos anônimas te oferecem um copo de água. Em Kairo-7, isso é quase uma declaração de amor.") end
+    execute = function(ctx)
+        Character.move("pixel", "refugio")
+        Narrator.say("Mãos anônimas te oferecem um copo de água. Em Kairo-7, isso é quase uma declaração de amor.")
+        Narrator.say("Pixel está diante de um terminal improvisado, cercada por cabos e servidores recuperados.")
+    end
 })
 
 -- Reações a mudanças de estado e itens
@@ -3226,7 +3565,9 @@ for _, p in ipairs(PRIMEIROS) do
     Event.create("primeiro_" .. pp.id, {
         trigger = "enter_room", room = p.room,
         conditions = function(ctx)
-            return not State.get(pp.flag) and Character.room(pp.id) == ctx.room
+            local atividade = ativ(pp.id)
+            local dormindo = type(atividade) == "string" and atividade:find("dormindo", 1, true)
+            return not State.get(pp.flag) and not dormindo and Character.room(pp.id) == ctx.room
         end,
         execute = function(ctx)
             State.set(pp.flag,true)
