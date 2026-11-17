@@ -489,7 +489,7 @@ local function pump(val) local out={} local steps=0
    elseif coroutine.status(fr.co)=="dead" then cmd={op="RET",value=r} else cmd=r end end
   if cur then local op=type(cmd)=="table" and cmd.op or nil
    if op=="SAY" or op=="CLEAR" then out[#out+1]=cmd
-   elseif op=="OVER" then S.pendover=S.pendover or cmd.id cur=nil
+   elseif op=="OVER" then S.over=cmd.id S.pendover=nil cur=nil Q={} waiting=nil break
    elseif op=="WAIT" or op=="CHOICE" then out[#out+1]=cmd waiting=cmd return out
    elseif op=="DELAY" then advance(cmd.n,"scene")
    elseif op=="CALL" then local ok,f=pcall(mkframe,cmd.id) if ok then cur[#cur+1]=f else out[#out+1]={op="ERR",text=tostring(f)} cur=nil end
@@ -1014,7 +1014,11 @@ function controls(res){
   renderInv(v.inv,res.waiting||!!res.over);syncStage()}
 async function render(res){
   last=res;const tok=++runTok,v=res.view;skip=REDUCE;fastText=false;setTyping(true);
-  if(!res.over)hideOver();
+  if(res.over){
+    $('#ctl').innerHTML='';$('#acts').hidden=true;
+    return showOver(res.over,tok);
+  }
+  hideOver();
   $('#ctl').innerHTML=res.out.some(o=>o.op==='SAY')?'<span class="skip">Clique para acelerar o texto</span>':'';$('#acts').hidden=true;
   $('#wd').textContent=`${v.wd}, dia ${v.day}`;$('#hm').textContent=String(v.h).padStart(2,'0')+':'+String(v.m).padStart(2,'0');LIGHT.t=v.h+v.m/60;LIGHT.th=Array.isArray(v.theme)?null:v.theme;lights();
   renderInv(v.inv,true);renderHud(v.hud);
@@ -1039,7 +1043,6 @@ async function render(res){
   if(res.save&&G)await checkpoint(res);
   if(!await typeAll(res,tok))return;
   fastText=false;setTyping(false);if(res.saved)toast('◈ Ponto de salvamento gravado');
-  if(res.over){$('#ctl').innerHTML='';$('#acts').hidden=true;return showOver(res.over,tok)}
   controls(res)}
 const play=res=>render(res).catch(e=>{console.error(e);setTyping(false);toast('Erro: '+e.message)});
 let actionBusy=false;
