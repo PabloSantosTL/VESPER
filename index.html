@@ -211,11 +211,11 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
   body{font-size:15px;background-attachment:scroll}
   main{width:100%;max-width:100%;padding:14px 12px}
   #game{padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 24px)}
-  #game header{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 8px;align-items:center;margin:0 0 12px;padding:8px 0 12px;border-bottom:1px solid var(--ln)}
+  #game header{position:sticky;top:0;z-index:115;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 8px;align-items:center;margin:0 -12px 12px;padding:calc(env(safe-area-inset-top) + 9px) 12px 10px;border-bottom:1px solid var(--ln);background:rgba(0,0,0,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
   #game header h2{min-width:0;overflow-wrap:anywhere;font-size:clamp(12px,3.6vw,15px);line-height:1.35}
-  #clk{justify-content:flex-end;gap:7px;white-space:nowrap;font-size:10px}
+  #clk{justify-content:flex-end;gap:7px;white-space:nowrap;font-size:10px;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
   #clk b{font-size:clamp(19px,6vw,25px)}
-  .header-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr;justify-items:end;gap:6px;width:100%}
+  .header-actions{display:none}
   .header-actions button{min-width:0;padding:.75em .35em;text-align:center;font-size:10px;letter-spacing:.03em;min-height:42px}
   #bpanel{display:grid;place-items:center;width:48px;height:44px;padding:0;border-color:var(--ac);box-shadow:0 0 16px -5px var(--ac)}
   #bpanel svg{width:24px;height:24px;display:block}
@@ -300,6 +300,14 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
 @keyframes fx-glitch{0%,88%,100%{transform:translate(0);text-shadow:none}90%{transform:translate(-1px,1px);text-shadow:2px 0 #ff2bd6,-2px 0 #00f0ff}92%{transform:translate(1px,-1px);text-shadow:-2px 0 #ff2bd6,2px 0 #00f0ff}94%{transform:translate(0);text-shadow:1px 0 #fff,-1px 0 #00f0ff}}
 @keyframes fx-neon{from{text-shadow:0 0 2px currentColor,0 0 5px currentColor;opacity:.82}to{text-shadow:0 0 5px currentColor,0 0 14px currentColor,0 0 24px currentColor;opacity:1}}
 @keyframes fx-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.58;transform:scale(.96)}}
+/* HUD flutuante: cópia temporária da variável alterada no mobile */
+.hud-float{position:fixed;z-index:130;right:12px;bottom:calc(env(safe-area-inset-bottom) + 18px);width:min(270px,calc(100vw - 24px));padding:12px 14px;background:rgba(0,0,0,.96);border:1px solid var(--ac);box-shadow:0 0 24px color-mix(in srgb,var(--ac) 40%,transparent);pointer-events:none;opacity:0;transform:translateY(18px) scale(.96)}
+.hud-float .hv{margin:0!important}.hud-float .lbl{display:none!important}
+.hud-float.show{animation:hudFloatIn .28s ease-out forwards}.hud-float.hide{animation:hudFloatOut .35s ease-in forwards}
+@keyframes hudFloatIn{to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes hudFloatOut{to{opacity:0;transform:translateY(12px) scale(.97)}}
+@media(max-width:760px){.hud-float{right:10px;bottom:calc(env(safe-area-inset-bottom) + 14px)}}
+@media(prefers-reduced-motion:reduce){.hud-float{display:none!important}}
 </style>
 </head>
 <body>
@@ -329,7 +337,7 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
   <header>
     <h2 id="gt"></h2>
     <div id="clk"><span id="wd"></span><b id="hm"></b></div>
-    <div class="row header-actions"><button id="bpanel" aria-label="Abrir painel" title="Abrir painel" aria-expanded="false" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><button id="bcor" title="Cores do terminal">Cor</button><button id="bsave" disabled>Carregar</button><button id="bexit">Sair</button></div>
+    <div class="row header-actions"><button id="bcor" title="Cores do terminal">Cor</button><button id="bsave" disabled>Carregar</button><button id="bexit">Sair</button></div>
   </header>
   <div class="grid">
     <div>
@@ -934,6 +942,27 @@ function tween(el,to,h){const from=el._v;el._v=to;cancelAnimationFrame(el._r);
   const t0=performance.now(),D=550,step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);
     el.textContent=k<1?fmtN(h.decimals!=null?from+(to-from)*e:Math.round(from+(to-from)*e),h):fmtN(to,h);if(k<1)el._r=requestAnimationFrame(step)};
   el._r=requestAnimationFrame(step)}
+function mobileHudCopy(el,h,from,to){
+  if(innerWidth>760||REDUCE||from===undefined||from===to)return;
+  const card=document.createElement('div');card.className='hud-float';
+  const clone=el.cloneNode(true);clone.classList.remove('up','dn','warn');card.append(clone);document.body.append(card);
+  const hn=clone.querySelector('.hn'),bar=clone.querySelector('.bar i'),pips=clone.querySelector('.pips');
+  if(h.style==='bar'){
+    const mn=h.min??0,mx=h.max??100,pct=n=>mx>mn?Math.max(0,Math.min(1,(Number(n)-mn)/(mx-mn))):0;
+    if(bar){bar.style.transition='none';bar.style.width=(pct(from)*100)+'%';requestAnimationFrame(()=>{bar.style.transition='width .85s cubic-bezier(.2,.7,.2,1)';bar.style.width=(pct(to)*100)+'%'})}
+    if(hn){const t0=performance.now(),D=850,step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);hn.textContent=h.show_value===false?'':`${fmtN(Number(from)+(Number(to)-Number(from))*e,{})} / ${fmtN(mx,{})}`;if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
+  }else if(h.style==='number'&&hn){
+    hn.textContent=fmtN(from,h);const t0=performance.now(),D=850,step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);hn.textContent=fmtN(Number(from)+(Number(to)-Number(from))*e,h);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step);
+  }else if(h.style==='pips'&&pips){
+    const mx=Math.max(1,Math.min(20,Math.round(h.max||5))),a=Math.round(Number(from)||0),b=Math.round(Number(to)||0);
+    pips.innerHTML=Array.from({length:mx},(_,k)=>`<span class="${k<a?'on':''}">${esc(h.icon||'♥')}</span>`).join('');
+    [...pips.children].forEach((sp,i)=>{sp.style.transition='color .65s';setTimeout(()=>sp.classList.toggle('on',i<b),35+i*45)});
+  }else if(hn){
+    hn.textContent=fmtN(from,h);
+    if(typeof from==='number'&&typeof to==='number'){const t0=performance.now(),D=850,step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);hn.textContent=fmtN(from+(to-from)*e,h);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}else hn.textContent=fmtN(to,h);
+  }
+  card.classList.add('show');setTimeout(()=>{card.classList.remove('show');card.classList.add('hide');setTimeout(()=>card.remove(),380)},1250);
+}
 function renderHud(list){
   const box=$('#hud');box.hidden=!list.length;$('#hudFold').hidden=!list.length;
   if(!list.length){box.dataset.sig='';return}
@@ -941,9 +970,9 @@ function renderHud(list){
   if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML='<p class="lbl">Status</p>'+list.map(hudHtml).join('')}
   const els=box.querySelectorAll('.hv');
   list.forEach((h,i)=>{const el=els[i],hn=el.querySelector('.hn'),hb=el.querySelector('.hb'),v=h.value;
-    el.querySelector('.hl').textContent=h.label;
-    h.color?el.style.setProperty('--c',h.color):el.style.removeProperty('--c');
+    el.querySelector('.hl').textContent=h.label;h.color?el.style.setProperty('--c',h.color):el.style.removeProperty('--c');
     const prev=el._p;el._p=v;
+    if(prev!==undefined&&prev!==v)mobileHudCopy(el,h,prev,v);
     if(prev!==undefined&&typeof v==='number'&&typeof prev==='number'&&v!==prev){el.classList.remove('up','dn');void el.offsetWidth;el.classList.add(v>prev?'up':'dn')}
     if(h.style==='bar'){const mn=h.min??0,mx=h.max??100,n=Number(v)||0,pct=mx>mn?Math.max(0,Math.min(1,(n-mn)/(mx-mn))):0;
       hb.firstChild.style.width=pct*100+'%';el.classList.toggle('warn',h.warn!=null&&pct<=h.warn);
@@ -955,7 +984,6 @@ function renderHud(list){
       hb.setAttribute('aria-label',`${h.label}: ${Math.max(0,n)} de ${mx}`);hn.textContent=''}
     else if(h.style==='flag'){hn.textContent=v?(h.on||'Sim'):(h.off||'Não');el.classList.toggle('on',!!v)}
     else hn.textContent=v==null?'—':String(v)})}
-
 /* ----- console: texto escrito aos poucos ----- */
 async function typeLine(p,text,tok,box,style={}){
   const span=document.createElement('span');p.append(span);p.classList.add('wr');
@@ -1108,7 +1136,7 @@ async function open(src,name,mode){
     const sv=await kget(SK());hasSave=!!sv;refreshLoad();let pick='new';
     if(sv&&mode==='continue')pick='load';else if(sv&&mode==='ask'){pick=await askSave(sv,'start');if(pick==='cancel'){G=null;return}}
     if(pick==='load'){const x=call('V_restore',sv.data);if(x.ok===false){toast(x.msg);return begin(call('V_start',Date.now()%2147483647))}show('game');play(x)}
-    else begin(call('V_start',Date.now()%2147483647))}
+    else begin(call('V_start',Date.now()%2147483647));if(innerWidth<=760)toast('Dica: arraste o horário para a esquerda para abrir o painel de variáveis.')}
   catch(e){homeError(name,{kind:'Falha na inicialização',msg:e.message})}}
 async function readFile(f){if(!f)return;if(!/\.vyr$/i.test(f.name))return homeError(f.name,{kind:'Extensão inválida',msg:'Escolha um arquivo com extensão .vyr.'});open(await f.text(),f.name,'ask')}
 $('#pick').onclick=()=>$('#file').click();$('#file').onchange=e=>readFile(e.target.files[0]);
@@ -1123,13 +1151,17 @@ async function lib(){const ks=(await kkeys()).filter(k=>k.startsWith('story:'));
 const leave=()=>{runTok++;swapTok++;setTyping(false);hideOver();show('home');G=null;lib()};
 $('#bexit').onclick=leave;$('#omenu').onclick=leave;
 /* painel lateral retrátil em telas touch */
-const panelOpen=()=>{document.body.classList.add('panel-open');$('#side').setAttribute('aria-hidden','false');$('#bpanel').setAttribute('aria-expanded','true');$('#bpanelclose').focus({preventScroll:true})};
-const panelClose=()=>{document.body.classList.remove('panel-open');$('#side').setAttribute('aria-hidden',innerWidth<=760?'true':'false');$('#bpanel').setAttribute('aria-expanded','false')};
-$('#bpanel').onclick=panelOpen;$('#bpanelclose').onclick=panelClose;$('#panelShade').onclick=panelClose;
+const panelOpen=()=>{document.body.classList.add('panel-open');$('#side').setAttribute('aria-hidden','false')};
+const panelClose=()=>{document.body.classList.remove('panel-open');$('#side').setAttribute('aria-hidden',innerWidth<=760?'true':'false')};
+$('#bpanelclose').onclick=panelClose;$('#panelShade').onclick=panelClose;
+let clockTouch=null;
+$('#clk').addEventListener('pointerdown',e=>{if(innerWidth<=760)clockTouch={x:e.clientX,y:e.clientY}});
+$('#clk').addEventListener('pointerup',e=>{if(innerWidth>760||!clockTouch)return;const dx=e.clientX-clockTouch.x,dy=e.clientY-clockTouch.y;clockTouch=null;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)){if(dx<0)panelOpen();else panelClose()}});
+$('#clk').addEventListener('pointercancel',()=>clockTouch=null);
 $('#mbcor').onclick=()=>{panelClose();$('#bcor').click()};
 $('#mbsave').onclick=()=>{if(hasSave){panelClose();$('#bsave').click()}};
 $('#mbexit').onclick=leave;
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('panel-open')){panelClose();$('#bpanel').focus({preventScroll:true})}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('panel-open')){panelClose();$('#clk').focus?.({preventScroll:true})}});
 const adaptFolds=()=>{if(innerWidth>760){$('#hudFold').open=true;$('#invFold').open=true}};
 addEventListener('resize',()=>{if(innerWidth>760){panelClose();adaptFolds()}},{passive:true});adaptFolds();panelClose();
 $('#oretry').onclick=()=>{const g=G;if(g)open(g.src,g.name,'new')};
