@@ -265,48 +265,60 @@ end
 local function fala_escolha(texto)
     local s = tostring(texto):gsub("%s*%b()", "")
     s = s:gsub("^'(.*)'$", "%1")
-    local regras = {
-        { "^Perguntar", "Quero perguntar" }, { "^Oferecer", "Vou oferecer" },
-        { "^Ajudar", "Vou ajudar" }, { "^Examinar", "Vou examinar" },
-        { "^Anotar", "Vou anotar" }, { "^Copiar", "Vou copiar" },
-        { "^Fechar", "Vou fechar" }, { "^Comprar", "Vou comprar" },
-        { "^Atacar", "Vou atacar" }, { "^Usar", "Vou usar" },
-        { "^Entregar", "Vou entregar" }, { "^Negociar", "Vou negociar" },
-        { "^Esconder%-se", "Vou me esconder" }, { "^Ficar", "Vou ficar" },
-        { "^Correr", "Vou correr" }, { "^Fugir", "Vou fugir" },
-        { "^Lutar", "Vou lutar" }, { "^Mergulhar", "Vou mergulhar" },
-        { "^Entrar", "Vou entrar" }, { "^Mostrar", "Vou mostrar" },
-        { "^Liberar", "Vou liberar" }, { "^Destruir", "Vou destruir" },
-        { "^Vender", "Vou vender" }, { "^Fundir", "Vou fundir" },
-        { "^Pedir", "Vou pedir" }, { "^Aceitar", "Vou aceitar" },
-        { "^Sentar", "Vou sentar" }, { "^Só assistir", "Vou só assistir" },
-        { "^Apostar", "Vou apostar" }, { "^Se misturar", "Vou me misturar" },
-        { "^Forçar", "Vou forçar" }, { "^Cortar", "Vou cortar" },
-        { "^Chamar", "Vou chamar" }, { "^Assumir", "Vou assumir" },
-        { "^Lavar", "Vou lavar" }, { "^Trocar", "Vou trocar" },
-        { "^Distribuir", "Vou distribuir" }, { "^Observar", "Vou observar" },
-        { "^Deixar", "Vou deixar" }, { "^Abrir", "Vou abrir" },
-        { "^Fazer", "Vou fazer" }, { "^Continuar", "Vou continuar" },
-        { "^Sair", "Vou sair" }, { "^Pagar", "Vou pagar" },
-        { "^Desligar", "Vou desligar" }, { "^Dormir", "Vou dormir" },
-        { "^Ir embora", "Vou embora" }, { "^Ir ", "Vou " },
-        { "^Pegar", "Vou pegar" }, { "^Agradecer", "Vou agradecer" },
-        { "^Se aproximar", "Vou me aproximar" }, { "^Dizer", "Vou dizer" },
-        { "^Recusar", "Vou recusar" }, { "^Levantar", "Vou levantar" },
-        { "^Treinar", "Vou treinar" }, { "^Decifrar", "Vou decifrar" },
-        { "^Conversar", "Vou conversar" }, { "^Procurar", "Vou procurar" },
-        { "^Prometer", "Vou prometer" }, { "^Jogar", "Vou jogar" },
-        { "^Encarar", "Vou encarar" }, { "^Cooperar", "Vou cooperar" },
-        { "^Subornar", "Vou subornar" }, { "^Ler", "Vou ler" },
-        { "^Falar", "Vou falar" }, { "^Aguardar", "Vou aguardar" }
+
+    -- Só existe fala quando a escolha representa algo que o protagonista diz.
+    local falas = {
+        ["Prometer que vai pagar."] = "Eu prometo que vou pagar!",
+        ["Perguntar se dá para negociar o prazo."] = "Dá para negociar o prazo?",
+        ["Perguntar do gato da Dona Ishi."] = "Você sabe onde está o gato da Dona Ishi?",
+        ["Perguntar sobre o Rui da 14-F."] = "Você conhece o Rui da 14-F?",
+        ["Perguntar sobre 'o rapaz do cano'."] = "O que você sabe sobre o rapaz do cano?",
+        ["Perguntar o que se comenta sobre a Torre."] = "O que andam dizendo sobre a Torre?",
+        ["Perguntar ao Bartô o que ele ouve por aqui."] = "O que você tem ouvido por aqui, Bartô?",
+        ["Perguntar sobre o cartaz."] = "O que aconteceu com esse cartaz?",
+        ["Pedir um lámen."] = "Quero um lámen, por favor.",
+        ["Perguntar sobre o garoto de capuz."] = "Você sabe quem é aquele garoto de capuz?",
+        ["Comentar o braço quebrado do gato."] = "O que aconteceu com o braço dele?",
+        ["Perguntar o preço do atendimento."] = "Quanto custa o atendimento?",
+        ["Dizer que volta depois."] = "Vou voltar depois.",
+        ["Dizer que também ouve o elevador."] = "Também ouço o elevador.",
+        ["Perguntar o que ela está consertando."] = "O que você está consertando?",
+        ["Perguntar pelo cheiro de chá."] = "Que cheiro é esse? É chá?",
+        ["Perguntar onde ele foi visto pela última vez e oferecer ajuda."] = "Onde ele foi visto pela última vez? Posso ajudar a procurar.",
+        ["Dizer que está sem tempo."] = "Desculpa, estou sem tempo agora.",
+        ["Perguntar por que ela não chamou a manutenção."] = "Por que você não chamou a manutenção?",
+        ["Perguntar por que ele serve o garoto de graça."] = "Por que você serve comida de graça para aquele garoto?",
+        ["Perguntar pelo gato holográfico no letreiro."] = "O que é aquele gato holográfico no letreiro?",
+        ["Perguntar se ele sempre trabalha sozinho."] = "Você sempre trabalha sozinho?",
+        ["Perguntar quanto ele paga e por que não manda um drone."] = "Quanto você paga? Por que não manda um drone?",
+        ["Perguntar o que Sal acha da cidade."] = "O que você acha desta cidade, Sal?",
+        ["Perguntar sobre trabalhos."] = "Tem algum trabalho disponível?",
+        ["Perguntar sobre a rinha."] = "O que você pode me dizer sobre a rinha?",
+        ["Perguntar discretamente sobre ORFEU."] = "Você já ouviu falar de ORFEU?",
+        ["Oferecer informações sobre Mira (800 ¢)."] = "Tenho informações sobre Mira. Posso vender por 800 créditos.",
+        ["Oferecer o núcleo ORFEU (final corporativo)."] = "Quero oferecer o núcleo ORFEU à Helix.",
+        ["Negociar: você ainda pode ser útil à Helix."] = "Ainda posso ser útil à Helix. Podemos negociar?",
+        ["Perguntar por que ele está trabalhando sozinho."] = "Por que você está trabalhando sozinho?",
+        ["Perguntar sobre os casos de Bruma."] = "O que você sabe sobre os casos de Bruma?",
+        ["Perguntar o nome dele."] = "Como você se chama?",
+        ["Perguntar o que a Bruma faz."] = "O que a Bruma faz com as pessoas?",
+        ["Oferecer água e perguntar se precisam de atendimento."] = "Vocês precisam de água ou de atendimento médico?",
+        ["Perguntar quem distribui a Bruma."] = "Quem está distribuindo a Bruma?",
+        ["Chamar Mochi pelo nome."] = "Mochi!",
+        ["Perguntar de onde vieram as sementes."] = "De onde vieram essas sementes?",
+        ["Pedir um tomate."] = "Posso pegar um tomate?",
+        ["Perguntar quem fez o mural."] = "Quem fez esse mural?",
+        ["Perguntar a Rex sobre o nome apagado."] = "Rex, você sabe quem era o nome que apagaram?",
+        ["Dizer que o núcleo já foi copiado."] = "O núcleo já foi copiado.",
+        ["Agradecer e seguir."] = "Obrigado. Até mais.",
+        ["Recusar educadamente."] = "Não, obrigado.",
     }
-    for _, r in ipairs(regras) do
-        if s:match(r[1]) then
-            s = s:gsub(r[1], r[2], 1)
-            break
-        end
-    end
-    return s
+
+    if falas[tostring(texto)] then return falas[tostring(texto)] end
+
+    -- Escolhas já escritas como uma fala literal continuam sendo falas.
+    if tostring(texto):match("^'.*'$") then return s end
+    return nil
 end
 
 -- Menu de conversa: topicos = { {id=, txt=, se=function, fn=function}, ... }
