@@ -136,9 +136,10 @@ dialog::backdrop{background:rgba(5,3,14,.7)}
 @property --ac2{syntax:'<color>';inherits:true;initial-value:#ff2bd6}
 :root{--ui:'Oxanium','JetBrains Mono',ui-monospace,monospace;--tx:'Oxanium','JetBrains Mono',ui-monospace,monospace;--hd:'Orbitron','Oxanium',ui-monospace,monospace;--ink:#d8f6ff;--mut:#6f8f9c;--pan:rgba(0,0,0,.78)}
 body{font:15px/1.65 var(--tx);color:var(--ink);--lamp:var(--ac);--rose:var(--ac2);--ln:color-mix(in srgb,var(--ac) 30%,transparent);
- background:radial-gradient(120% 65% at 50% -8%,color-mix(in srgb,var(--a) 100%,transparent),transparent 70%),radial-gradient(90% 55% at 50% 112%,color-mix(in srgb,var(--b) 90%,transparent),transparent 65%),#000;background-attachment:fixed;
+ background:radial-gradient(ellipse at center,transparent 46%,rgba(0,0,0,.48) 100%),radial-gradient(120% 65% at 50% -8%,color-mix(in srgb,var(--a) 100%,transparent),transparent 70%),radial-gradient(90% 55% at 50% 112%,color-mix(in srgb,var(--b) 90%,transparent),transparent 65%),#000;background-attachment:fixed;
  transition:--a 2.5s,--b 2.5s,--ac 2.5s,--ac2 2.5s}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);box-shadow:inset 0 0 150px #000}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px),linear-gradient(90deg,rgba(255,30,80,.018),transparent 34%,rgba(0,220,255,.018));box-shadow:inset 0 0 150px #000;animation:crt-flicker 8s steps(1,end) infinite}
+@keyframes crt-flicker{0%,95%,100%{opacity:1}96%{opacity:.88}97%{opacity:.97}98%{opacity:.92}}
 button{font:600 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:rgba(0,0,0,.6);border:1px solid var(--ln);border-radius:2px;padding:.7em 1em}
 button:hover:not(:disabled){background:color-mix(in srgb,var(--lamp) 16%,#000);border-color:var(--lamp);box-shadow:0 0 14px -2px var(--lamp);color:#fff}
 .p{background:var(--lamp);color:#000;border-color:var(--lamp);box-shadow:0 0 18px -4px var(--lamp)}
@@ -150,7 +151,7 @@ button:hover:not(:disabled){background:color-mix(in srgb,var(--lamp) 16%,#000);b
 header h2{font:800 15px var(--hd);letter-spacing:.14em;text-transform:uppercase}
 #clk b{font-family:var(--hd);text-shadow:0 0 14px var(--lamp)}
 #room h3{font:800 22px var(--hd);letter-spacing:.08em;text-transform:uppercase;color:var(--lamp);text-shadow:0 0 14px color-mix(in srgb,var(--lamp) 60%,transparent)}
-#desc{font-size:15.5px}.ln.n{color:#9fc4d0}.ln b{letter-spacing:.06em;text-transform:uppercase;font-size:12px}
+#desc{font-size:15.5px}.ln.n{color:#9fc4d0}.ln b{letter-spacing:.06em;text-transform:uppercase;font-size:12px}.ln.player{color:#b8f4df}.ln.player b{color:var(--rose);text-transform:none}
 #chars span{border-radius:2px;background:color-mix(in srgb,var(--rose) 16%,#000);border:1px solid color-mix(in srgb,var(--rose) 55%,transparent);font-size:12px}
 .bar{height:8px;border-radius:0}.bar i{border-radius:0;box-shadow:0 0 10px var(--c)}
 .s-number .hn{font-family:var(--hd);text-shadow:0 0 12px var(--lamp)}.s-text .hn{font:italic 15px var(--tx)}
@@ -189,7 +190,7 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
 *::-webkit-scrollbar-track{background:color-mix(in srgb,var(--ac) 10%,#03050a);border:1px solid color-mix(in srgb,var(--ac2) 24%,transparent)}
 *::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--ac2),var(--ac));border:2px solid color-mix(in srgb,var(--ac) 12%,#05070b);border-radius:2px;box-shadow:0 0 10px color-mix(in srgb,var(--ac) 70%,transparent)}
 *::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--ac),var(--ac2));box-shadow:0 0 14px var(--ac)}
-#log{max-height:min(48vh,560px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-right:8px;scrollbar-color:var(--ac2) color-mix(in srgb,var(--ac2) 9%,#03050a)}
+#log{max-height:min(48vh,560px);overflow:auto;overscroll-behavior-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable;padding-right:8px;scrollbar-color:var(--ac2) color-mix(in srgb,var(--ac2) 9%,#03050a)}
 #log::-webkit-scrollbar{width:8px}
 #log::-webkit-scrollbar-track{background:color-mix(in srgb,var(--ac2) 9%,#03050a)}
 #log::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--ac2),var(--ac));border-color:color-mix(in srgb,var(--ac) 12%,#05070b)}
@@ -203,6 +204,7 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
 .sidehead{display:none}
 #bpanel{display:none}
 #panelShade{display:none}
+.mobile-actions{display:none}
 
 @media(max-width:760px){
   html,body{min-height:100%;width:100%;overflow-x:hidden}
@@ -213,9 +215,11 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
   #game header h2{min-width:0;overflow-wrap:anywhere;font-size:clamp(12px,3.6vw,15px);line-height:1.35}
   #clk{justify-content:flex-end;gap:7px;white-space:nowrap;font-size:10px}
   #clk b{font-size:clamp(19px,6vw,25px)}
-  .header-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
+  .header-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr;justify-items:end;gap:6px;width:100%}
   .header-actions button{min-width:0;padding:.75em .35em;text-align:center;font-size:10px;letter-spacing:.03em;min-height:42px}
-  #bpanel{display:block}
+  #bpanel{display:grid;place-items:center;width:48px;height:44px;padding:0;border-color:var(--ac);box-shadow:0 0 16px -5px var(--ac)}
+  #bpanel svg{width:24px;height:24px;display:block}
+  #bcor,#bsave,#bexit{display:none}
   .grid{display:block;width:100%;min-width:0}
   .grid>div{display:flex;flex-direction:column;gap:10px;width:100%;min-width:0}
   #room{padding:16px 14px}
@@ -223,7 +227,8 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
   #desc{font-size:15px;line-height:1.55}
   #chars span{margin:5px 5px 0 0}
   #stage{margin-top:0;padding:13px 12px}
-  #log{max-height:42dvh;min-height:100px;padding-right:5px;font-size:14px;line-height:1.55}
+  #log{max-height:42dvh;min-height:100px;padding-right:5px;font-size:14px;line-height:1.55;overscroll-behavior-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+  #stage{touch-action:pan-y}
   .ln{overflow-wrap:anywhere}
   #ctl{gap:7px}
   #ctl button{width:100%;min-height:44px;text-align:left}
@@ -242,6 +247,8 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
   .fold>summary::after{content:'+';font:700 18px var(--ui);color:var(--lamp)}
   .fold[open]>summary::after{content:'−'}
   .fold>section.pan{margin:0 8px 8px;padding:12px;border-color:color-mix(in srgb,var(--ac) 24%,transparent);background:rgba(0,0,0,.66);box-shadow:none}
+  .mobile-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid var(--ln)}
+  .mobile-actions button{width:100%;min-height:48px;text-align:left;padding:12px 14px}
   #hud[hidden]{display:none!important}
   #hud .lbl,#inv>.lbl{display:none}
   #hud .hv{margin:2px 0 12px}
@@ -279,6 +286,20 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
 @media(prefers-reduced-motion:reduce){
   #side,#panelShade{transition:none!important}
 }
+/* Efeitos de texto acionados pelo autor via Narrator.say / Character.say. */
+.fx-char{display:inline-block;white-space:pre}
+.ln.fx-shake .fx-char{animation:fx-shake .24s steps(2,end) infinite;animation-delay:calc(var(--i)*13ms)}
+.ln.fx-wave .fx-char{animation:fx-wave 1.15s ease-in-out infinite;animation-delay:calc(var(--i)*42ms)}
+.ln.fx-rainbow .fx-char{animation:fx-rainbow 3s linear infinite;animation-delay:calc(var(--i)*-95ms)}
+.ln.fx-glitch .fx-char{animation:fx-glitch 1.8s steps(1,end) infinite;animation-delay:calc(var(--i)*31ms)}
+.ln.fx-neon .fx-char{animation:fx-neon 1.35s ease-in-out infinite alternate;animation-delay:calc(var(--i)*22ms)}
+.ln.fx-pulse .fx-char{animation:fx-pulse 1.3s ease-in-out infinite;animation-delay:calc(var(--i)*35ms)}
+@keyframes fx-shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-.7px,.5px)}50%{transform:translate(.7px,-.4px)}75%{transform:translate(-.4px,-.6px)}}
+@keyframes fx-wave{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes fx-rainbow{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+@keyframes fx-glitch{0%,88%,100%{transform:translate(0);text-shadow:none}90%{transform:translate(-1px,1px);text-shadow:2px 0 #ff2bd6,-2px 0 #00f0ff}92%{transform:translate(1px,-1px);text-shadow:-2px 0 #ff2bd6,2px 0 #00f0ff}94%{transform:translate(0);text-shadow:1px 0 #fff,-1px 0 #00f0ff}}
+@keyframes fx-neon{from{text-shadow:0 0 2px currentColor,0 0 5px currentColor;opacity:.82}to{text-shadow:0 0 5px currentColor,0 0 14px currentColor,0 0 24px currentColor;opacity:1}}
+@keyframes fx-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.58;transform:scale(.96)}}
 </style>
 </head>
 <body>
@@ -308,7 +329,7 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
   <header>
     <h2 id="gt"></h2>
     <div id="clk"><span id="wd"></span><b id="hm"></b></div>
-    <div class="row header-actions"><button id="bpanel" aria-expanded="false" aria-controls="side">Painel</button><button id="bcor" title="Cores do terminal">Cor</button><button id="bsave" disabled>Carregar</button><button id="bexit">Sair</button></div>
+    <div class="row header-actions"><button id="bpanel" aria-label="Abrir painel" title="Abrir painel" aria-expanded="false" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M3 5h15m-4-3 4 3-4 3M3 12h15m-4-3 4 3-4 3M3 19h15m-4-3 4 3-4 3"/></svg></button><button id="bcor" title="Cores do terminal">Cor</button><button id="bsave" disabled>Carregar</button><button id="bexit">Sair</button></div>
   </header>
   <div class="grid">
     <div>
@@ -320,6 +341,7 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
       <div class="sidehead"><span>PAINEL DE DADOS</span><button id="bpanelclose" type="button" aria-label="Fechar painel">×</button></div>
       <details class="fold" id="hudFold" open><summary>Variáveis</summary><section class="pan" id="hud" hidden></section></details>
       <details class="fold" id="invFold"><summary>Inventário</summary><section class="pan" id="inv"><p class="lbl">Inventário</p></section></details>
+      <div class="mobile-actions" aria-label="Ações do jogo"><button id="mbcor" type="button">Cor</button><button id="mbsave" type="button" disabled>Carregar</button><button id="mbexit" type="button">Sair</button></div>
     </aside>
   </div>
 </main>
@@ -525,7 +547,29 @@ env.World={create=function(n,f) R.world.name=n if f then f() end end,
   advance(x.duration or 0,"move") pmove(r) end}
 env.Room={create=function(id,d) reg("room",id,d) for _,l in ipairs{d.exits or {},d.actions or {}} do for _,x in ipairs(l) do x.rid=id x.id=x.id or x.to end end end,
  exists=function(r) return R.room[r]~=nil end,reveal=function(r,e) S.shown[r..":"..e]=true end}
-env.Narrator={say=function(t) return y{op="SAY",text=interp(tostring(t))} end}
+-- Efeitos para Narrator.say / Character.say:
+-- shake, wave, rainbow, glitch, neon e pulse.
+-- Ex.: Narrator.say("A tela falha...", {effect="glitch", color="#ff2bd6", speed=28})
+-- Ex.: Character.say("ana", "Olá.", {effect="wave"})
+local TEXT_FX={shake=true,wave=true,rainbow=true,glitch=true,neon=true,pulse=true}
+local function sayText(text,who,opts)
+ opts=type(opts)=="table" and opts or {}
+ local effect=opts.effect
+ if effect~=nil and effect~="" and not TEXT_FX[effect] then
+  error('Efeito de texto inválido "'..tostring(effect)..'". Use shake, wave, rainbow, glitch, neon ou pulse.',3)
+ end
+ local color=opts.color
+ if color~=nil and (type(color)~="string" or not color:match("^#%x%x%x%x%x%x$")) then
+  error('A cor do texto precisa estar no formato "#rrggbb".',3)
+ end
+ local speed=opts.speed
+ if speed~=nil then
+  speed=tonumber(speed)
+  if not speed or speed<5 or speed>120 then error("Text speed deve ficar entre 5 e 120 milissegundos por caractere.",3) end
+ end
+ return y{op="SAY",who=who,text=interp(tostring(text)),effect=effect,color=color,speed=speed}
+end
+env.Narrator={say=function(t,opts) return sayText(t,nil,opts) end}
 env.Scene={create=function(id,fn) if type(fn)~="function" then error("Scene.create exige uma função",2) end reg("scene",id,{fn=fn}) end,
  start=function(id) startscene(id) end,call=function(id) return y{op="CALL",id=id} end,jump=function(id) return y{op="JUMP",id=id} end,
  return_scene=function(v) return y{op="RET",value=v} end,end_scene=function() return y{op="END"} end,
@@ -537,7 +581,7 @@ env.Character={create=function(id,d) reg("char",id,d) end,exists=function(i) ret
  room=function(i) return S.chars[i] and S.chars[i].room end,
  move=function(i,r) if not S.chars[i] or not R.room[r] then error("Character.move: personagem ou ambiente inexistente",2) end moveto(i,r) end,
  say=function(i,t,o) if not R.char[i] then error('Personagem inexistente: "'..tostring(i)..'"',2) end o=o or {}
-  return y{op="SAY",who=R.char[i].name or i,text=interp(tostring(t)),emotion=o.emotion} end,
+  return sayText(t,R.char[i].name or i,o) end,
  get_state=function(i,k) return S.chars[i] and S.chars[i].state[k] end,
  set_state=function(i,k,v) if not S.chars[i] then error("Character.set_state: personagem inexistente",2) end cset(i,k,v) end}
 env.Event={create=function(id,d) if not TRIG[d.trigger] then error('Evento "'..tostring(id)..'": gatilho inválido "'..tostring(d.trigger)..'"',2) end reg("event",id,d) end,
@@ -731,7 +775,16 @@ function V_cfinish()
  startintro()
  return reply()
 end
-function V_input(val) if waiting then waiting=nil return reply(pump(val~="" and val or nil)) end return reply() end
+function V_input(val) if waiting then
+ local spoken=nil
+ if waiting.op=="CHOICE" then for _,opt in ipairs(waiting.options or {}) do
+  if tostring(opt.id)==tostring(val) then spoken=opt.text break end end end
+ waiting=nil
+ local out={}
+ if spoken~=nil then out[#out+1]={op="SAY",who="Você",text=spoken,player=true} end
+ for _,cmd in ipairs(pump(val~="" and val or nil)) do out[#out+1]=cmd end
+ return reply(out)
+ end return reply() end
 function V_exit(id) if idle() then local r=R.room[S.room] local x=find(r.exits,id)
   if x and test(x.conditions,{room=S.room}) then
    if x.on_use then cb(x.on_use,{room=S.room}) end advance(x.duration or 0,"move") pmove(x.to) if x.save then S.savereq=S.savereq or true end if x.scene then startscene(x.scene) end end end
@@ -889,15 +942,27 @@ function renderHud(list){
     else hn.textContent=v==null?'—':String(v)})}
 
 /* ----- console: texto escrito aos poucos ----- */
-async function typeLine(p,text,tok,box){
+async function typeLine(p,text,tok,box,style={}){
   const span=document.createElement('span');p.append(span);p.classList.add('wr');
+  const allowed=['shake','wave','rainbow','glitch','neon','pulse'];
+  const effect=allowed.includes(style.effect)?style.effect:null;
+  const color=typeof style.color==='string'&&/^#[0-9a-f]{6}$/i.test(style.color)?style.color:null;
+  const speed=Math.max(5,Math.min(120,Number(style.speed)||20));
+  if(effect)p.classList.add('fx-'+effect);
+  if(color)p.style.color=color;
   const cs=Array.from(text);
+  const addChar=(c,i)=>{
+    if(!effect){span.textContent+=c;return}
+    const letter=document.createElement('span');letter.className='fx-char';letter.style.setProperty('--i',i);letter.textContent=c;span.append(letter)};
   for(let i=0;i<cs.length;i++){
     if(skip||tok!==runTok)break;
-    const c=cs[i];span.textContent+=c;if(box)box.scrollTop=box.scrollHeight;
+    const c=cs[i];addChar(c,i);if(box)box.scrollTop=box.scrollHeight;
     const end=i===cs.length-1||cs[i+1]===' ';
-    await sleep(/[.!?…]/.test(c)&&end?170:/[,;:—]/.test(c)&&end?80:c===' '?18:20)}
-  span.textContent=text;p.classList.remove('wr');if(box)box.scrollTop=box.scrollHeight}
+    await sleep(/[.!?…]/.test(c)&&end?170:/[,;:—]/.test(c)&&end?80:c===' '?18:speed)}
+  if(tok===runTok){
+    if(effect){span.replaceChildren();cs.forEach(addChar)}else span.textContent=text;
+  }
+  p.classList.remove('wr');if(box)box.scrollTop=box.scrollHeight}
 function syncStage(){const stage=$('#stage');stage.hidden=!($('#log').childElementCount||$('#ctl').querySelector('button'))}
 function addErr(t){const d=document.createElement('p');d.className='ln e';d.textContent='⚠ '+t;$('#log').append(d);syncStage()}
 async function typeAll(res,tok){
@@ -908,10 +973,10 @@ async function typeAll(res,tok){
     if(o.op==='ERR'){addErr(o.text);continue}
     if(o.op!=='SAY')continue;
     $('#stage').hidden=false;
-    const p=document.createElement('p');p.className='ln'+(o.who?'':' n');
+    const p=document.createElement('p');p.className='ln'+(o.player?' player':o.who?'':' n');
     if(o.who)p.innerHTML=`<b>${esc(o.who)}</b>`;
     log.append(p);log.scrollTop=log.scrollHeight;
-    await typeLine(p,o.text,tok,log);
+    await typeLine(p,o.text,tok,log,o);
     if(!skip&&tok===runTok)await sleep(380)}
   res.errs.forEach(addErr);
   return tok===runTok}
@@ -1043,6 +1108,9 @@ $('#bexit').onclick=leave;$('#omenu').onclick=leave;
 const panelOpen=()=>{document.body.classList.add('panel-open');$('#side').setAttribute('aria-hidden','false');$('#bpanel').setAttribute('aria-expanded','true');$('#bpanelclose').focus({preventScroll:true})};
 const panelClose=()=>{document.body.classList.remove('panel-open');$('#side').setAttribute('aria-hidden',innerWidth<=760?'true':'false');$('#bpanel').setAttribute('aria-expanded','false')};
 $('#bpanel').onclick=panelOpen;$('#bpanelclose').onclick=panelClose;$('#panelShade').onclick=panelClose;
+$('#mbcor').onclick=()=>{panelClose();$('#bcor').click()};
+$('#mbsave').onclick=()=>{if(hasSave){panelClose();$('#bsave').click()}};
+$('#mbexit').onclick=leave;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('panel-open')){panelClose();$('#bpanel').focus({preventScroll:true})}});
 const adaptFolds=()=>{if(innerWidth>760){$('#hudFold').open=true;$('#invFold').open=true}};
 addEventListener('resize',()=>{if(innerWidth>760){panelClose();adaptFolds()}},{passive:true});adaptFolds();panelClose();
@@ -1057,7 +1125,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');
 document.addEventListener('keydown',e=>{if(typing&&(e.key==='Enter'||e.key===' ')&&!e.target.closest('input,textarea,button')){skip=true;e.preventDefault()}});
 /* ---------- salvamento por pontos (o autor decide onde, com Game.save) ---------- */
 const SK=()=>'save:'+G.id;let hasSave=false;
-function refreshLoad(){const b=$('#bsave');b.disabled=!hasSave;b.title=hasSave?'Carregar o último ponto de salvamento':'Nenhum ponto de salvamento ainda'}
+function refreshLoad(){const b=$('#bsave');b.disabled=!hasSave;b.title=hasSave?'Carregar o último ponto de salvamento':'Nenhum ponto de salvamento ainda';const mb=$('#mbsave');if(mb)mb.disabled=!hasSave}
 async function checkpoint(res){const v=res.view,hm=String(v.h).padStart(2,'0')+':'+String(v.m).padStart(2,'0');
   const label=(res.save.label?res.save.label+' · ':'')+`${v.title} · ${v.wd}, dia ${v.day} ${hm}`;
   try{const data=call('V_save')||res.save.data;if(!data)throw new Error('O estado do jogo retornou vazio.');await kset(SK(),{when:Date.now(),label,ver:G.version,data});hasSave=true;res.saved=true;refreshLoad()}catch(e){console.error('Falha ao gravar ponto de salvamento:',e);toast('Falha ao salvar: '+(e?.message||'erro desconhecido'))}}
