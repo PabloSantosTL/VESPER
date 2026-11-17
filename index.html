@@ -840,7 +840,7 @@ const show=id=>{['home','create','game'].forEach(x=>$('#'+x).hidden=x!==id)};
 function homeError(name,r){show('home');const m=(r.msg||'').match(/^(?:.*?):(\d+):\s*([\s\S]*)$/),line=r.line||(m&&m[1]),msg=m?m[2]:r.msg;
   const b=$('#herr');b.hidden=false;b.textContent=`ERRO DE HISTÓRIA\n\nArquivo: ${name}\n${line?'Linha: '+line+'\n':''}Tipo: ${r.kind||'Erro'}\n\n${msg}`}
 
-let runTok=0,swapTok=0,skip=false,typing=false,curRoom=null,CR=null;
+let runTok=0,swapTok=0,skip=false,fastText=false,typing=false,curRoom=null,CR=null;
 const setTyping=b=>{typing=b;document.body.classList.toggle('typing',b)};
 
 /* ----- troca de ambiente: nome e descrição saem, os novos entram ----- */
@@ -853,7 +853,7 @@ async function writeRoomText(el,text,tok,delay=38){
   for(const ch of Array.from(text)){
     if(skip||tok!==runTok)break;
     span.textContent+=ch;
-    await sleep(/[.!?…]/.test(ch)?150:/[,;:—]/.test(ch)?75:ch===' '?24:delay);
+    await sleep(fastText?0:(/[.!?…]/.test(ch)?150:/[,;:—]/.test(ch)?75:ch===' '?24:delay));
   }
   if(tok===runTok)span.textContent=text;
   el.classList.remove('wr');
@@ -961,7 +961,7 @@ async function typeLine(p,text,tok,box,style={}){
     if(skip||tok!==runTok)break;
     const c=cs[i];addChar(c,i);if(box)box.scrollTop=box.scrollHeight;
     const end=i===cs.length-1||cs[i+1]===' ';
-    await sleep(/[.!?…]/.test(c)&&end?170:/[,;:—]/.test(c)&&end?80:c===' '?18:speed)}
+    await sleep(fastText?0:(/[.!?…]/.test(c)&&end?170:/[,;:—]/.test(c)&&end?80:c===' '?18:speed))}
   if(tok===runTok){
     if(effect){span.replaceChildren();cs.forEach(addChar)}else span.textContent=text;
   }
@@ -1013,7 +1013,7 @@ function controls(res){
   acts.hidden=res.waiting||!!res.over;
   renderInv(v.inv,res.waiting||!!res.over);syncStage()}
 async function render(res){
-  last=res;const tok=++runTok,v=res.view;skip=REDUCE;setTyping(true);
+  last=res;const tok=++runTok,v=res.view;skip=REDUCE;fastText=false;setTyping(true);
   if(!res.over)hideOver();
   $('#ctl').innerHTML=res.out.some(o=>o.op==='SAY')?'<span class="skip">Clique para acelerar o texto</span>':'';$('#acts').hidden=true;
   $('#wd').textContent=`${v.wd}, dia ${v.day}`;$('#hm').textContent=String(v.h).padStart(2,'0')+':'+String(v.m).padStart(2,'0');LIGHT.t=v.h+v.m/60;LIGHT.th=Array.isArray(v.theme)?null:v.theme;lights();
@@ -1038,7 +1038,7 @@ async function render(res){
   if(tok!==runTok)return;
   if(res.save&&G)await checkpoint(res);
   if(!await typeAll(res,tok))return;
-  setTyping(false);if(res.saved)toast('◈ Ponto de salvamento gravado');
+  fastText=false;setTyping(false);if(res.saved)toast('◈ Ponto de salvamento gravado');
   if(res.over){$('#ctl').innerHTML='';$('#acts').hidden=true;return showOver(res.over,tok)}
   controls(res)}
 const play=res=>render(res).catch(e=>{console.error(e);setTyping(false);toast('Erro: '+e.message)});
@@ -1122,10 +1122,10 @@ $('#oload').onclick=()=>loadSave(false);
 /* ---------- ações do jogo ---------- */
 const GAMEBTN=d=>'in' in d||d.exit||d.act||d.use||d.wait;
 document.addEventListener('click',e=>{const b=e.target.closest('button');
-  if(typing&&!b){skip=true;return}
+  if(typing&&!b){fastText=true;return}
   if(!b)return;const d=b.dataset;if(typing&&GAMEBTN(d))return;
   if('in' in d)act('V_input',d.in);else if(d.exit)act('V_exit',d.exit);else if(d.act)act('V_act',d.act);else if(d.use)act('V_use',d.use);else if(d.wait)act('V_wait',+d.wait)});
-document.addEventListener('keydown',e=>{if(typing&&(e.key==='Enter'||e.key===' ')&&!e.target.closest('input,textarea,button')){skip=true;e.preventDefault()}});
+document.addEventListener('keydown',e=>{if(typing&&(e.key==='Enter'||e.key===' ')&&!e.target.closest('input,textarea,button')){fastText=true;e.preventDefault()}});
 /* ---------- salvamento por pontos (o autor decide onde, com Game.save) ---------- */
 const SK=()=>'save:'+G.id;let hasSave=false;
 function refreshLoad(){const b=$('#bsave');b.disabled=!hasSave;b.title=hasSave?'Carregar o último ponto de salvamento':'Nenhum ponto de salvamento ainda';const mb=$('#mbsave');if(mb)mb.disabled=!hasSave}
