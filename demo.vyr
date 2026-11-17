@@ -127,7 +127,7 @@ local function g(m, f, n)
     if x == "f" then return f elseif x == "m" then return m end
     return n or m
 end
-local function viz() return g("vizinho", "vizinha", "meu bem") end
+local function viz() return g("vizinho", "vizinha", "vizinho") end
 local function nome_jogador()
     local nome = Player.name()
     if nome and nome ~= "" then return nome end
@@ -2300,7 +2300,7 @@ Scene.create("talk_taro", function()
         State.add("rep_rua", 1)
         Character.say("taro", "E de agora em diante, lámen pra você custa só 8 ¢! Família não paga preço cheio!")
     else
-        Character.say("taro", "Tigela fresquinha quando você quiser, " .. nome_conhecido("taro", g("amigo", "amiga", "meu bem")) .. "!")
+        Character.say("taro", "Tigela fresquinha quando você quiser, " .. nome_conhecido("taro", g("amigo", "amiga", "amigo")) .. "!")
     end
 end)
 
