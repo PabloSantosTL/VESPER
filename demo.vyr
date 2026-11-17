@@ -2618,6 +2618,7 @@ Scene.create("cobradores", function()
     Narrator.say("Você ainda tenta negociar. Depois, tenta correr. Por fim, só tenta respirar.")
     Narrator.say("O que sobra de você é vendido em partes na semana seguinte, no Mercado Noturno de sexta.")
     Narrator.say("FIM: JUROS COMPOSTOS. (Você pode reiniciar uma nova partida.)")
+    Game.over("cobradores")
 end)
 
 Scene.create("prazo_ok", function()
