@@ -329,7 +329,7 @@ body,*{scrollbar-width:thin;scrollbar-color:var(--ac) color-mix(in srgb,var(--ac
   <header>
     <h2 id="gt"></h2>
     <div id="clk"><span id="wd"></span><b id="hm"></b></div>
-    <div class="row header-actions"><button id="bpanel" aria-label="Abrir painel" title="Abrir painel" aria-expanded="false" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M3 5h15m-4-3 4 3-4 3M3 12h15m-4-3 4 3-4 3M3 19h15m-4-3 4 3-4 3"/></svg></button><button id="bcor" title="Cores do terminal">Cor</button><button id="bsave" disabled>Carregar</button><button id="bexit">Sair</button></div>
+    <div class="row header-actions"><button id="bpanel" aria-label="Abrir painel" title="Abrir painel" aria-expanded="false" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><button id="bcor" title="Cores do terminal">Cor</button><button id="bsave" disabled>Carregar</button><button id="bexit">Sair</button></div>
   </header>
   <div class="grid">
     <div>
@@ -574,7 +574,10 @@ env.Scene={create=function(id,fn) if type(fn)~="function" then error("Scene.crea
  start=function(id) startscene(id) end,call=function(id) return y{op="CALL",id=id} end,jump=function(id) return y{op="JUMP",id=id} end,
  return_scene=function(v) return y{op="RET",value=v} end,end_scene=function() return y{op="END"} end,
  wait=function() return y{op="WAIT"} end,delay=function(n) return y{op="DELAY",n=n} end,
- choice=function(opts) local o={} for _,x in ipairs(opts) do if x.id and x.text and test(x.conditions,{}) then o[#o+1]={id=x.id,text=interp(x.text)} end end
+ choice=function(opts) local o={} for _,x in ipairs(opts) do if x.id and x.text and test(x.conditions,{}) then
+   -- text é o rótulo do botão; say é opcional e só ele gera uma fala do jogador.
+   o[#o+1]={id=x.id,text=interp(x.text),say=x.say and interp(x.say) or nil}
+  end end
   if #o==0 then return nil end return y{op="CHOICE",options=o} end}
 env.Character={create=function(id,d) reg("char",id,d) end,exists=function(i) return R.char[i]~=nil end,
  get=function(i) local c=S.chars[i] if not c then return nil end return {id=i,name=R.char[i].name,room=c.room,state=copy(c.state)} end,
@@ -778,7 +781,7 @@ end
 function V_input(val) if waiting then
  local spoken=nil
  if waiting.op=="CHOICE" then for _,opt in ipairs(waiting.options or {}) do
-  if tostring(opt.id)==tostring(val) then spoken=opt.text break end end end
+  if tostring(opt.id)==tostring(val) then spoken=opt.say break end end end
  waiting=nil
  local out={}
  if spoken~=nil then out[#out+1]={op="SAY",who="Você",text=spoken,player=true} end
